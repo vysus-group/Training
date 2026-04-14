@@ -99,12 +99,11 @@ const TrainingEngine = (() => {
         'peace-framework':    { name: 'PEACE Framework',                    level: 'principal',  xp: 1200, order: 18, file: 'modules/peace-framework/index.html' },
         'talent-pipeline':    { name: 'Talent Pipeline / Intern Program',   level: 'principal',  xp: 1100, order: 19, file: 'modules/talent-pipeline/index.html' },
         '5.3.4A':             { name: '5.3.4A Letter',                      level: 'entry',     xp: 500,  order: 20, file: 'modules/5.3.4A Letter/index.html' },
-        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 21, file: 'modules/Data Request/index.html' },
-        'base-calculation':   { name: 'Base Calculation',                   level: 'entry',     xp: 500,  order: 22, file: 'modules/base-calculation/index.html' }
+        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 21, file: 'modules/Data Request/index.html' }
     };
 
     const LEVEL_MODULES = {
-        entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request', 'base-calculation'],
+        entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request'],
         senior:    ['aemo-gps', 'gps-requirements', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub'],
         lead:      ['cross-platform', 'auto-init', 'project-mgmt', 'ms-project', 'team-governance'],
         principal: ['peace-framework', 'talent-pipeline']

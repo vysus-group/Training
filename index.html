@@ -572,6 +572,27 @@
     };
 
     // ── Passkey (WebAuthn) ──────────────────────────────────
+
+    function isPasskeyAvailable() {
+        return !!(window.PublicKeyCredential && window.isSecureContext);
+    }
+
+    function setPasskeyUIAvailability() {
+        const passkeyTab = Array.from(document.querySelectorAll('.login-tab'))
+            .find(t => t.textContent.toLowerCase().includes('passkey'));
+        const passkeyMode = document.getElementById('mode-passkey');
+        if (!passkeyTab || !passkeyMode) return;
+
+        if (!isPasskeyAvailable()) {
+            passkeyTab.style.opacity = '0.5';
+            passkeyTab.style.cursor = 'not-allowed';
+            passkeyTab.title = 'Passkeys require HTTPS (or localhost) and a supported browser.';
+            passkeyMode.querySelectorAll('button').forEach(btn => { btn.disabled = true; });
+        }
+    }
+
+    setPasskeyUIAvailability();
+
     function generateChallenge() {
         const arr = new Uint8Array(32);
         crypto.getRandomValues(arr);
@@ -587,8 +608,8 @@
         if (!email.endsWith('@vysusgroup.com')) { document.getElementById('login-error').textContent = 'Only @vysusgroup.com emails permitted.'; return; }
         if (!name || name.length < 2) { document.getElementById('login-error').textContent = 'Please enter your full name.'; return; }
 
-        if (!window.PublicKeyCredential) {
-            document.getElementById('login-error').textContent = 'Passkeys not supported in this browser.';
+        if (!isPasskeyAvailable()) {
+            document.getElementById('login-error').textContent = 'Passkeys require HTTPS (or localhost) and a supported browser.';
             return;
         }
 
@@ -603,6 +624,7 @@
                         displayName: name
                     },
                     pubKeyCredParams: [{ alg: -7, type: 'public-key' }, { alg: -257, type: 'public-key' }],
+                    authenticatorSelection: { residentKey: 'preferred', userVerification: 'preferred' },
                     timeout: 60000,
                     attestation: 'none'
                 }
@@ -632,8 +654,8 @@
     window.loginWithPasskey = async function() {
         document.getElementById('login-error').textContent = '';
 
-        if (!window.PublicKeyCredential) {
-            document.getElementById('login-error').textContent = 'Passkeys not supported in this browser.';
+        if (!isPasskeyAvailable()) {
+            document.getElementById('login-error').textContent = 'Passkeys require HTTPS (or localhost) and a supported browser.';
             return;
         }
 
@@ -649,7 +671,12 @@
 
             const credId = btoa(String.fromCharCode(...new Uint8Array(credential.rawId)));
             const passkeys = JSON.parse(localStorage.getItem('vysus_passkeys') || '{}');
-            const email = passkeys[credId];
+            let email = passkeys[credId];
+            if (!email && credential.response?.userHandle) {
+                try {
+                    email = new TextDecoder().decode(new Uint8Array(credential.response.userHandle));
+                } catch {}
+            }
 
             if (!email || !email.endsWith('@vysusgroup.com')) {
                 document.getElementById('login-error').textContent = 'Passkey not recognised. Please register first.';
@@ -664,6 +691,8 @@
         } catch (err) {
             if (err.name === 'NotAllowedError') {
                 document.getElementById('login-error').textContent = 'Login cancelled or no passkeys available.';
+            } else if (err.name === 'SecurityError') {
+                document.getElementById('login-error').textContent = 'Passkeys require HTTPS (or localhost).';
             } else {
                 document.getElementById('login-error').textContent = 'Passkey login failed. Try password login.';
                 console.error('Passkey login error:', err);

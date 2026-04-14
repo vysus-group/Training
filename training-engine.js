@@ -79,7 +79,7 @@ const TrainingEngine = (() => {
 
     // ── Module Registry ────────────────────────────────────────────
     const MODULES = {
-        'ner-chapter5':       { name: 'NER Chapter 5 Introduction',         level: 'senior',     xp: 500,  order: 1,  file: 'modules/ner-chapter5/index.html' },
+        'ner-chapter5':       { name: 'NER Chapter 5 Introduction',         level: 'entry',     xp: 500,  order: 1,  file: 'modules/ner-chapter5/index.html' },
         'access-standards':   { name: 'Access Standards & GPS Framework',   level: 'entry',     xp: 600,  order: 2,  file: 'modules/access-standards/index.html' },
         'network-storage':    { name: 'Network Storage & SSD Workflow',     level: 'entry',     xp: 500,  order: 3,  file: 'modules/network-storage/index.html' },
         'way-of-working':     { name: 'Way of Working / WOW',              level: 'entry',     xp: 500,  order: 4,  file: 'modules/way-of-working/index.html' },
@@ -100,12 +100,12 @@ const TrainingEngine = (() => {
         'talent-pipeline':    { name: 'Talent Pipeline / Intern Program',   level: 'principal',  xp: 1100, order: 19, file: 'modules/talent-pipeline/index.html' },
         '5.3.4A':             { name: '5.3.4A Letter',                      level: 'entry',     xp: 500,  order: 20, file: 'modules/5.3.4A Letter/index.html' },
         'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 21, file: 'modules/Data Request/index.html' },
-        'base-calculation':   { name: 'Base calculation',                   level: 'senior',    xp: 500,  order: 22, file: 'modules/Base calculation/index.html' }
+        'base-calculation':   { name: 'Base calculation',                   level: 'entry',     xp: 500,  order: 22, file: 'modules/Base calculation/index.html' }
     };
 
     const LEVEL_MODULES = {
-        entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request'],
-        senior:    ['aemo-gps', 'gps-requirements', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub', 'base-calculation'],
+        entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request', 'base-calculation'],
+        senior:    ['aemo-gps', 'gps-requirements', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub'],
         lead:      ['cross-platform', 'auto-init', 'project-mgmt', 'ms-project', 'team-governance'],
         principal: ['peace-framework', 'talent-pipeline']
     };

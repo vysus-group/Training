@@ -332,10 +332,13 @@
 
         <!-- Password Login Mode -->
         <div class="login-mode active" id="mode-password">
-            <input type="text" class="login-input" id="login-name" placeholder="Full Name" autocomplete="name">
+            <input type="text" class="login-input" id="login-name" placeholder="Full Name (used for first-time registration)" autocomplete="name">
             <input type="email" class="login-input" id="login-email" placeholder="your.name@vysusgroup.com" autocomplete="email">
             <input type="password" class="login-input" id="login-password" placeholder="Password" autocomplete="current-password">
             <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In</button>
+            <div style="margin-top: 0.8rem; text-align:center;">
+                <a href="/forgot-password" style="color:var(--stockholm-neon); text-decoration:none; font-size:0.85rem;">Forgot password?</a>
+            </div>
             <div style="margin-top: 0.8rem;">
                 <button class="login-btn secondary" onclick="doRegister()" id="register-btn" style="font-size: 0.85rem; padding: 0.7rem;">
                     First time? Create Account
@@ -461,14 +464,13 @@
         document.getElementById('login-error').textContent = '';
     };
 
-    // ── Password hashing (PBKDF2-SHA256) ────────────────────
-    async function hashPassword(password, salt) {
-        const enc = new TextEncoder();
-        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
-        const bits = await crypto.subtle.deriveBits({
-            name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256'
-        }, keyMaterial, 256);
-        return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    function deriveDisplayName(email, name) {
+        if (name && name.trim().length >= 2) return name.trim();
+        return email.split('@')[0]
+            .split('.')
+            .filter(Boolean)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
     }
 
     // ── Password Login ──────────────────────────────────────
@@ -478,8 +480,8 @@
         const password = document.getElementById('login-password').value;
         const btn = document.getElementById('login-btn');
 
-        if (!email || !name || !password) {
-            document.getElementById('login-error').textContent = 'Please fill in all fields.';
+        if (!email || !password) {
+            document.getElementById('login-error').textContent = 'Please enter your email and password.';
             return;
         }
         if (!email.endsWith('@vysusgroup.com')) {
@@ -491,7 +493,7 @@
         document.getElementById('login-error').textContent = '';
 
         try {
-            const hash = await hashPassword(password, email);
+            const hash = await TrainingEngine.Auth.hashPassword(password, email);
             const verified = await TrainingEngine.Auth.verifyPassword(email, hash);
 
             if (verified === null) {
@@ -506,7 +508,7 @@
                 return;
             }
 
-            const result = await TrainingEngine.User.login(email, name);
+            const result = await TrainingEngine.User.login(email, deriveDisplayName(email, name));
             btn.textContent = 'Sign In'; btn.disabled = false;
 
             if (result.ok) {
@@ -536,8 +538,9 @@
             document.getElementById('login-error').textContent = 'Only @vysusgroup.com emails are permitted.';
             return;
         }
-        if (password.length < 6) {
-            document.getElementById('login-error').textContent = 'Password must be at least 6 characters.';
+        const policyError = TrainingEngine.Auth.passwordPolicyError(password);
+        if (policyError) {
+            document.getElementById('login-error').textContent = policyError;
             return;
         }
 
@@ -545,7 +548,7 @@
         document.getElementById('login-error').textContent = '';
 
         try {
-            const hash = await hashPassword(password, email);
+            const hash = await TrainingEngine.Auth.hashPassword(password, email);
             const registered = await TrainingEngine.Auth.registerPassword(email, hash);
 
             if (!registered.ok) {

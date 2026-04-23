@@ -9,6 +9,7 @@ const TrainingEngine = (() => {
     // ── Configuration ──────────────────────────────────────────────
     const CONFIG = {
         STORAGE_KEY: 'vysus_training',
+        RESET_TOKEN_KEY: 'vysus_training_reset_tokens',
         ADMIN_EMAILS: ['chris.marinelli@vysusgroup.com', 'faraz.khan@vysusgroup.com'],
         ADMIN_NAMES: ['faraz'],
         DOMAIN: '@vysusgroup.com',
@@ -114,9 +115,65 @@ const TrainingEngine = (() => {
     let _state = null;
     let _timeTracker = { section: null, started: null, elapsed: 0, paused: false };
     let _visibilityHandler = null;
+    const RESET_TOKEN_TTL_MS = 1000 * 60 * 30;
 
     function normalizeIdentity(value) {
         return String(value || '').trim().toLowerCase();
+    }
+
+    function isCompanyEmail(email) {
+        return normalizeIdentity(email).endsWith(CONFIG.DOMAIN);
+    }
+
+    function passwordPolicyError(password) {
+        if (!password || password.length < 10) return 'Password must be at least 10 characters.';
+        if (!/[A-Z]/.test(password)) return 'Password must include at least one uppercase letter.';
+        if (!/[a-z]/.test(password)) return 'Password must include at least one lowercase letter.';
+        if (!/[0-9]/.test(password)) return 'Password must include at least one number.';
+        return '';
+    }
+
+    async function hashPassword(password, salt) {
+        const enc = new TextEncoder();
+        const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+        const bits = await crypto.subtle.deriveBits({
+            name: 'PBKDF2',
+            salt: enc.encode(normalizeIdentity(salt)),
+            iterations: 100000,
+            hash: 'SHA-256'
+        }, keyMaterial, 256);
+        return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function loadResetTokens() {
+        try {
+            return JSON.parse(localStorage.getItem(CONFIG.RESET_TOKEN_KEY) || '{}');
+        } catch {
+            return {};
+        }
+    }
+
+    function saveResetTokens(tokens) {
+        localStorage.setItem(CONFIG.RESET_TOKEN_KEY, JSON.stringify(tokens));
+    }
+
+    function createResetToken() {
+        if (crypto.randomUUID) return crypto.randomUUID();
+        const bytes = new Uint8Array(16);
+        crypto.getRandomValues(bytes);
+        return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function inspectResetToken(token) {
+        const tokens = loadResetTokens();
+        const record = tokens[token];
+        if (!record) return { ok: false, error: 'This password reset link is invalid or has expired.' };
+        if (record.expiresAt < Date.now()) {
+            delete tokens[token];
+            saveResetTokens(tokens);
+            return { ok: false, error: 'This password reset link has expired. Request a new link.' };
+        }
+        return { ok: true, email: record.email, expiresAt: record.expiresAt };
     }
 
     // ── Storage Layer ──────────────────────────────────────────────
@@ -325,6 +382,27 @@ const TrainingEngine = (() => {
 
     // ── Auth (Password via Supabase RPC) ─────────────────────────
     const Auth = {
+        hashPassword,
+
+        passwordPolicyError,
+
+        async checkUserExists(email) {
+            try {
+                const sb = await loadSupabase();
+                if (!sb) return null;
+                const { data, error } = await sb.rpc('check_user_exists', {
+                    p_email: normalizeIdentity(email)
+                });
+                if (error) {
+                    console.error('check_user_exists error:', error);
+                    return null;
+                }
+                return data === true;
+            } catch {
+                return null;
+            }
+        },
+
         async verifyPassword(email, hash) {
             try {
                 const sb = await loadSupabase();
@@ -340,7 +418,7 @@ const TrainingEngine = (() => {
 
         async registerPassword(email, hash) {
             email = email.toLowerCase().trim();
-            if (!email.endsWith(CONFIG.DOMAIN)) {
+            if (!isCompanyEmail(email)) {
                 return { ok: false, error: `Email must end with ${CONFIG.DOMAIN}` };
             }
             try {
@@ -365,6 +443,84 @@ const TrainingEngine = (() => {
             } catch (err) {
                 console.error('Registration error:', err);
                 return { ok: false, error: 'Registration failed.' };
+            }
+        },
+
+        async requestPasswordReset(email) {
+            email = normalizeIdentity(email);
+            if (!isCompanyEmail(email)) {
+                return { ok: false, error: `Email must end with ${CONFIG.DOMAIN}` };
+            }
+
+            const exists = await Auth.checkUserExists(email);
+            if (exists === null) {
+                return { ok: false, error: 'Could not connect to server.' };
+            }
+            if (!exists) {
+                return { ok: false, error: 'No account was found for that email address.' };
+            }
+
+            const token = createResetToken();
+            const tokens = loadResetTokens();
+            tokens[token] = {
+                email,
+                createdAt: Date.now(),
+                expiresAt: Date.now() + RESET_TOKEN_TTL_MS
+            };
+            saveResetTokens(tokens);
+
+            const resetUrl = new URL('reset-password', window.location.href);
+            resetUrl.searchParams.set('token', token);
+
+            return {
+                ok: true,
+                email,
+                token,
+                expiresAt: tokens[token].expiresAt,
+                resetUrl: resetUrl.toString()
+            };
+        },
+
+        inspectPasswordResetToken(token) {
+            return inspectResetToken(token);
+        },
+
+        async resetPassword(token, nextPassword) {
+            const pending = inspectResetToken(token);
+            if (!pending.ok) return pending;
+
+            const policyError = passwordPolicyError(nextPassword);
+            if (policyError) return { ok: false, error: policyError };
+
+            const hash = await hashPassword(nextPassword, pending.email);
+            const sb = await loadSupabase();
+            if (!sb) return { ok: false, error: 'Could not connect to server.' };
+
+            try {
+                let response = await sb.rpc('reset_password', {
+                    p_email: pending.email,
+                    p_hash: hash
+                });
+
+                if (response.error) {
+                    response = await sb.rpc('register_password', {
+                        p_email: pending.email,
+                        p_hash: hash
+                    });
+                }
+
+                if (response.error) {
+                    console.error('reset_password error:', response.error);
+                    return { ok: false, error: 'Password reset failed. Please contact an administrator if the issue persists.' };
+                }
+
+                const tokens = loadResetTokens();
+                delete tokens[token];
+                saveResetTokens(tokens);
+                return { ok: true, email: pending.email };
+            } catch (err) {
+                console.error('Password reset error:', err);
+                return { ok: false, error: 'Password reset failed. Please try again.' };
             }
         }
     };

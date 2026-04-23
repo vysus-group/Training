@@ -153,11 +153,23 @@
             </div>
         </div>
     </div>
+    <script src="training-engine.js"></script>
     <script>
+        TrainingEngine.init();
+
         const form = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
         const submitBtn = document.getElementById('submit-btn');
+
+        function deriveDisplayName(email) {
+            return email
+                .split('@')[0]
+                .split('.')
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -167,27 +179,33 @@
             submitBtn.textContent = 'Signing in...';
 
             try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    }),
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    successMessage.textContent = 'Login successful! Redirecting...';
-                    successMessage.classList.add('show');
-                    setTimeout(() => { window.location.href = '/'; }, 1000);
-                } else {
-                    errorMessage.textContent = data.detail || 'Invalid email or password';
-                    errorMessage.classList.add('show');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                const email = document.getElementById('email').value.trim().toLowerCase();
+                const password = document.getElementById('password').value;
+
+                if (!email || !password) {
+                    throw new Error('Please enter your email and password.');
                 }
+
+                const hash = await TrainingEngine.Auth.hashPassword(password, email);
+                const verified = await TrainingEngine.Auth.verifyPassword(email, hash);
+
+                if (verified === null) {
+                    throw new Error('Could not connect to the authentication service. Please try again.');
+                }
+                if (!verified) {
+                    throw new Error('Invalid email or password.');
+                }
+
+                const result = await TrainingEngine.User.login(email, deriveDisplayName(email));
+                if (!result.ok) {
+                    throw new Error(result.error || 'Login failed.');
+                }
+
+                successMessage.textContent = 'Login successful! Redirecting...';
+                successMessage.classList.add('show');
+                setTimeout(() => { window.location.href = '/'; }, 1000);
             } catch (error) {
-                errorMessage.textContent = 'An error occurred. Please try again.';
+                errorMessage.textContent = error.message || 'An error occurred. Please try again.';
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Sign In';

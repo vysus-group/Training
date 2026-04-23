@@ -167,7 +167,10 @@
             </div>
         </div>
     </div>
+    <script src="training-engine.js"></script>
     <script>
+        TrainingEngine.init();
+
         const form = document.getElementById('register-form');
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
@@ -180,6 +183,16 @@
             lower: document.getElementById('req-lower'),
             number: document.getElementById('req-number'),
         };
+
+        function deriveDisplayName(email, fullName) {
+            if (fullName && fullName.trim().length >= 2) return fullName.trim();
+            return email
+                .split('@')[0]
+                .split('.')
+                .filter(Boolean)
+                .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
+        }
 
         passwordInput.addEventListener('input', () => {
             const p = passwordInput.value;
@@ -209,8 +222,9 @@
                 errorMessage.classList.add('show');
                 return;
             }
-            if (password.length < 10) {
-                errorMessage.textContent = 'Password must be at least 10 characters';
+            const policyError = TrainingEngine.Auth.passwordPolicyError(password);
+            if (policyError) {
+                errorMessage.textContent = policyError;
                 errorMessage.classList.add('show');
                 return;
             }
@@ -219,24 +233,22 @@
             submitBtn.textContent = 'Creating account...';
 
             try {
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, full_name: fullName || null }),
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    successMessage.textContent = 'Account created! Redirecting to login...';
-                    successMessage.classList.add('show');
-                    setTimeout(() => { window.location.href = '/login'; }, 2000);
-                } else {
-                    errorMessage.textContent = data.detail || 'Registration failed';
-                    errorMessage.classList.add('show');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Account';
+                const hash = await TrainingEngine.Auth.hashPassword(password, email);
+                const registration = await TrainingEngine.Auth.registerPassword(email, hash);
+                if (!registration.ok) {
+                    throw new Error(registration.error || 'Registration failed');
                 }
+
+                const loginResult = await TrainingEngine.User.login(email, deriveDisplayName(email, fullName));
+                if (!loginResult.ok) {
+                    throw new Error(loginResult.error || 'Account created, but automatic login failed.');
+                }
+
+                successMessage.textContent = 'Account created! Redirecting...';
+                successMessage.classList.add('show');
+                setTimeout(() => { window.location.href = '/'; }, 1500);
             } catch (error) {
-                errorMessage.textContent = 'An error occurred. Please try again.';
+                errorMessage.textContent = error.message || 'An error occurred. Please try again.';
                 errorMessage.classList.add('show');
                 submitBtn.disabled = false;
                 submitBtn.textContent = 'Create Account';

@@ -9,7 +9,8 @@ const TrainingEngine = (() => {
     // ── Configuration ──────────────────────────────────────────────
     const CONFIG = {
         STORAGE_KEY: 'vysus_training',
-        ADMIN_EMAILS: ['chris.marinelli@vysusgroup.com'],
+        ADMIN_EMAILS: ['chris.marinelli@vysusgroup.com', 'faraz.khan@vysusgroup.com'],
+        ADMIN_NAMES: ['faraz'],
         DOMAIN: '@vysusgroup.com',
         PASS_THRESHOLD: 0.7,
         SUPABASE_URL: 'https://ekytcurxudovqqvabmyp.supabase.co',
@@ -113,6 +114,10 @@ const TrainingEngine = (() => {
     let _state = null;
     let _timeTracker = { section: null, started: null, elapsed: 0, paused: false };
     let _visibilityHandler = null;
+
+    function normalizeIdentity(value) {
+        return String(value || '').trim().toLowerCase();
+    }
 
     // ── Storage Layer ──────────────────────────────────────────────
     const Storage = {
@@ -307,7 +312,10 @@ const TrainingEngine = (() => {
         },
 
         isAdmin() {
-            return _state && CONFIG.ADMIN_EMAILS.includes(_state.user.email);
+            if (!_state?.user) return false;
+            const email = normalizeIdentity(_state.user.email);
+            const name = normalizeIdentity(_state.user.name);
+            return CONFIG.ADMIN_EMAILS.includes(email) || CONFIG.ADMIN_NAMES.includes(name);
         },
 
         isLoggedIn() {

@@ -40,13 +40,7 @@
             background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%);
             z-index: 1;
         }
-        .container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 440px;
-            padding: 2rem;
-        }
+        .container { position: relative; z-index: 10; width: 100%; max-width: 440px; padding: 2rem; }
         .glass-card {
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(60px) saturate(180%);
@@ -56,10 +50,7 @@
             padding: 3rem 2.5rem;
             animation: floatIn 0.8s ease;
         }
-        @keyframes floatIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes floatIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .logo { text-align: center; margin-bottom: 2rem; }
         .logo h1 {
             font-size: 1.8rem;
@@ -71,51 +62,34 @@
         .logo p { color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; }
         .form-group { margin-bottom: 1.25rem; }
         .form-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
+            display: block; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem;
         }
         .form-group input {
-            width: 100%;
-            padding: 1rem 1.2rem;
+            width: 100%; padding: 1rem 1.2rem;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
+            border-radius: 12px; color: white; font-size: 1rem;
             transition: all 0.3s ease;
         }
         .form-group input::placeholder { color: rgba(255, 255, 255, 0.4); }
         .form-group input:focus {
-            outline: none;
-            border-color: var(--stockholm-neon);
+            outline: none; border-color: var(--stockholm-neon);
             box-shadow: 0 0 20px rgba(0, 227, 169, 0.2);
         }
         .form-group .hint { color: rgba(255, 255, 255, 0.5); font-size: 0.8rem; margin-top: 0.4rem; }
         .password-requirements { margin-top: 0.5rem; font-size: 0.8rem; }
         .password-requirements li {
-            color: rgba(255, 255, 255, 0.5);
-            list-style: none;
-            padding-left: 1.2rem;
-            position: relative;
+            color: rgba(255, 255, 255, 0.5); list-style: none;
+            padding-left: 1.2rem; position: relative;
         }
         .password-requirements li::before { content: '○'; position: absolute; left: 0; }
         .password-requirements li.valid { color: var(--stockholm-neon); }
         .password-requirements li.valid::before { content: '✓'; }
         .submit-btn {
-            width: 100%;
-            padding: 1rem;
+            width: 100%; padding: 1rem;
             background: linear-gradient(135deg, var(--stockholm-neon), var(--malmo-green));
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            margin-top: 1rem;
+            border: none; border-radius: 12px; color: white; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.4s ease; margin-top: 1rem;
         }
         .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 227, 169, 0.4); }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -139,7 +113,7 @@
             <form id="register-form">
                 <div class="form-group">
                     <label for="full_name">Full Name</label>
-                    <input type="text" id="full_name" name="full_name" placeholder="Your full name" autocomplete="name">
+                    <input type="text" id="full_name" name="full_name" placeholder="Your full name" required autocomplete="name">
                 </div>
                 <div class="form-group">
                     <label for="email">Email</label>
@@ -163,11 +137,16 @@
                 <button type="submit" class="submit-btn" id="submit-btn">Create Account</button>
             </form>
             <div class="links">
-                <a href="/login">Already have an account? Sign in</a>
+                <a href="/login.html">Already have an account? Sign in</a>
             </div>
         </div>
     </div>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="training-engine.js"></script>
+    <script src="auth-debug.js"></script>
     <script>
+        const DBG = (s, m, d) => window.vysusDebug?.log('register.html:' + s, m, d);
+        DBG('init', 'page loaded');
         const form = document.getElementById('register-form');
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
@@ -189,57 +168,72 @@
             requirements.number.classList.toggle('valid', /[0-9]/.test(p));
         });
 
+        async function hashPassword(password, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits({
+                name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256'
+            }, keyMaterial, 256);
+            return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMessage.classList.remove('show');
             successMessage.classList.remove('show');
 
-            const email = document.getElementById('email').value;
+            const email = document.getElementById('email').value.trim().toLowerCase();
             const password = document.getElementById('password').value;
             const confirmPassword = document.getElementById('confirm_password').value;
-            const fullName = document.getElementById('full_name').value;
+            const fullName = document.getElementById('full_name').value.trim();
 
-            if (!email.toLowerCase().endsWith('@vysusgroup.com')) {
+            if (!email.endsWith('@vysusgroup.com')) {
                 errorMessage.textContent = 'Only @vysusgroup.com emails are allowed';
-                errorMessage.classList.add('show');
-                return;
+                errorMessage.classList.add('show'); return;
             }
             if (password !== confirmPassword) {
                 errorMessage.textContent = 'Passwords do not match';
-                errorMessage.classList.add('show');
-                return;
+                errorMessage.classList.add('show'); return;
             }
-            if (password.length < 10) {
-                errorMessage.textContent = 'Password must be at least 10 characters';
-                errorMessage.classList.add('show');
-                return;
+            if (password.length < 10 || !/[A-Z]/.test(password) || !/[a-z]/.test(password) || !/[0-9]/.test(password)) {
+                errorMessage.textContent = 'Password must be 10+ chars with upper, lower, and number.';
+                errorMessage.classList.add('show'); return;
+            }
+            if (!fullName || fullName.length < 2) {
+                errorMessage.textContent = 'Please enter your full name.';
+                errorMessage.classList.add('show'); return;
             }
 
             submitBtn.disabled = true;
             submitBtn.textContent = 'Creating account...';
 
             try {
-                const response = await fetch('/api/auth/register', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email, password, full_name: fullName || null }),
-                });
-                const data = await response.json();
-                if (response.ok) {
-                    successMessage.textContent = 'Account created! Redirecting to login...';
-                    successMessage.classList.add('show');
-                    setTimeout(() => { window.location.href = '/login'; }, 2000);
-                } else {
-                    errorMessage.textContent = data.detail || 'Registration failed';
+                DBG('submit', 'form submitted', { email, nameLen: fullName.length, passwordLen: password.length });
+                const hash = await hashPassword(password, email);
+                DBG('submit', 'hash computed', { hashPreview: hash.slice(0,8) + '…', len: hash.length });
+                const registered = await TrainingEngine.Auth.registerPassword(email, hash);
+                DBG('submit', 'register result', registered);
+                if (!registered.ok) {
+                    errorMessage.textContent = registered.error || 'Registration failed';
                     errorMessage.classList.add('show');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Create Account';
+                    submitBtn.disabled = false; submitBtn.textContent = 'Create Account';
+                    return;
                 }
-            } catch (error) {
+                const result = await TrainingEngine.User.login(email, fullName);
+                if (result.ok) {
+                    successMessage.textContent = 'Account created! Redirecting...';
+                    successMessage.classList.add('show');
+                    setTimeout(() => { window.location.href = '/'; }, 1200);
+                } else {
+                    errorMessage.textContent = result.error || 'Login failed after registration.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false; submitBtn.textContent = 'Create Account';
+                }
+            } catch (err) {
+                console.error('Registration error:', err);
                 errorMessage.textContent = 'An error occurred. Please try again.';
                 errorMessage.classList.add('show');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Create Account';
+                submitBtn.disabled = false; submitBtn.textContent = 'Create Account';
             }
         });
     </script>

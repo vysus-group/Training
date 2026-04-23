@@ -6,12 +6,63 @@
 const TrainingEngine = (() => {
     'use strict';
 
+    // ── Debug Logger ───────────────────────────────────────────────
+    // Enable via ?debug=1 in URL, localStorage.vysus_debug='1', or window.VYSUS_DEBUG=true.
+    // Visible log also mirrored to localStorage.vysus_debug_log (last 500 entries) for post-mortem.
+    const DEBUG = {
+        enabled: (() => {
+            try {
+                if (typeof window === 'undefined') return false;
+                if (window.VYSUS_DEBUG === true) return true;
+                if (new URLSearchParams(location.search).get('debug') === '1') return true;
+                if (localStorage.getItem('vysus_debug') === '1') return true;
+            } catch {}
+            return false;
+        })(),
+        _buf: [],
+        redact(s) {
+            if (s == null) return s;
+            const str = String(s);
+            if (str.length < 12) return '<redacted>';
+            return str.slice(0, 6) + '…' + str.slice(-4) + ` (len=${str.length})`;
+        },
+        log(scope, msg, data) {
+            if (!this.enabled) return;
+            const ts = new Date().toISOString();
+            const tag = `%c[Vysus:${scope}]%c ${ts}`;
+            try { console.log(tag, 'color:#00E3A9;font-weight:bold', 'color:#888', msg, data ?? ''); } catch {}
+            try {
+                const entry = { ts, scope, msg, data: data === undefined ? null : JSON.parse(JSON.stringify(data)) };
+                this._buf.push(entry);
+                if (this._buf.length > 500) this._buf.shift();
+                localStorage.setItem('vysus_debug_log', JSON.stringify(this._buf));
+            } catch {}
+        },
+        warn(scope, msg, data) {
+            if (!this.enabled) { try { console.warn(`[Vysus:${scope}]`, msg, data ?? ''); } catch {} ; return; }
+            try { console.warn(`%c[Vysus:${scope}]`, 'color:#f92d63;font-weight:bold', msg, data ?? ''); } catch {}
+            this.log(scope, 'WARN: ' + msg, data);
+        },
+        error(scope, msg, err) {
+            try { console.error(`%c[Vysus:${scope}]`, 'color:#ff3366;font-weight:bold', msg, err); } catch {}
+            this.log(scope, 'ERROR: ' + msg, { error: String(err && err.message || err), stack: err && err.stack });
+        },
+        dump() { try { return JSON.parse(localStorage.getItem('vysus_debug_log') || '[]'); } catch { return []; } },
+        clear() { this._buf = []; try { localStorage.removeItem('vysus_debug_log'); } catch {} }
+    };
+    if (typeof window !== 'undefined') {
+        window.vysusDebug = DEBUG; // exposed for in-browser inspection
+        if (DEBUG.enabled) console.info('%c[Vysus] Debug mode ENABLED. window.vysusDebug.dump() for history.', 'color:#00E3A9');
+    }
+
     // ── Configuration ──────────────────────────────────────────────
     const CONFIG = {
         STORAGE_KEY: 'vysus_training',
+        // Fallback admin list used ONLY until the server-side is_admin RPC responds.
+        // Real authorisation is enforced by Supabase RLS + is_user_admin() RPC (see supabase/migrations.sql).
         ADMIN_EMAILS: ['chris.marinelli@vysusgroup.com', 'faraz.khan@vysusgroup.com'],
-        ADMIN_NAMES: ['faraz'],
         DOMAIN: '@vysusgroup.com',
+        SESSION_TTL_MS: 8 * 60 * 60 * 1000, // 8 hours
         PASS_THRESHOLD: 0.7,
         SUPABASE_URL: 'https://ekytcurxudovqqvabmyp.supabase.co',
         SUPABASE_KEY: 'sb_publishable_QHn_8yCwCGLaimiqoJk95A_Fhd55iP0',
@@ -26,21 +77,24 @@ const TrainingEngine = (() => {
     let _sb = null;
     function loadSupabase() {
         return new Promise((resolve) => {
-            if (_sb) { resolve(_sb); return; }
+            if (_sb) { DEBUG.log('supabase', 'client cached, reusing'); resolve(_sb); return; }
             if (window.supabase?.createClient) {
+                DEBUG.log('supabase', 'createClient from preloaded global', { url: CONFIG.SUPABASE_URL });
                 _sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
                 resolve(_sb);
                 return;
             }
+            DEBUG.log('supabase', 'loading supabase-js from CDN…');
             const script = document.createElement('script');
             script.src = 'https://unpkg.com/@supabase/supabase-js@2';
             script.onload = () => {
                 try {
                     _sb = window.supabase.createClient(CONFIG.SUPABASE_URL, CONFIG.SUPABASE_KEY);
+                    DEBUG.log('supabase', 'client created after CDN load');
                     resolve(_sb);
-                } catch { resolve(null); }
+                } catch (e) { DEBUG.error('supabase', 'createClient failed after CDN load', e); resolve(null); }
             };
-            script.onerror = () => resolve(null);
+            script.onerror = (e) => { DEBUG.error('supabase', 'CDN script failed to load', e); resolve(null); };
             document.head.appendChild(script);
         });
     }
@@ -124,15 +178,18 @@ const TrainingEngine = (() => {
         load() {
             try {
                 const raw = localStorage.getItem(CONFIG.STORAGE_KEY);
-                return raw ? JSON.parse(raw) : null;
-            } catch { return null; }
+                const parsed = raw ? JSON.parse(raw) : null;
+                DEBUG.log('Storage.load', parsed ? 'hit' : 'miss', parsed ? { email: parsed.user?.email, xp: parsed.xp, authed: parsed._authenticated } : null);
+                return parsed;
+            } catch (e) { DEBUG.error('Storage.load', 'parse failed', e); return null; }
         },
 
         save(state) {
             try {
                 localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(state));
+                DEBUG.log('Storage.save', 'ok', { email: state?.user?.email, xp: state?.xp, bytes: JSON.stringify(state).length });
             } catch (e) {
-                console.warn('Storage save failed:', e);
+                DEBUG.error('Storage.save', 'failed', e);
             }
         },
 
@@ -152,9 +209,10 @@ const TrainingEngine = (() => {
         },
 
         async syncToSupabase(state) {
+            DEBUG.log('Storage.syncToSupabase', 'enter', { email: state?.user?.email, modules: Object.keys(state?.modules||{}).length, feedback: (state?.feedback||[]).length });
             try {
                 const sb = await loadSupabase();
-                if (!sb) return;
+                if (!sb) { DEBUG.warn('Storage.syncToSupabase', 'no supabase client'); return; }
 
                 await sb.from('training_users').upsert({
                     email: state.user.email,
@@ -201,17 +259,20 @@ const TrainingEngine = (() => {
                         actioned: fb.actioned || false
                     }, { onConflict: 'id' });
                 }
-            } catch { /* silent — localStorage is primary */ }
+                DEBUG.log('Storage.syncToSupabase', 'done');
+            } catch (e) { DEBUG.error('Storage.syncToSupabase', 'failed (localStorage stays primary)', e); }
         },
 
         async syncFromSupabase(email) {
+            DEBUG.log('Storage.syncFromSupabase', 'enter', { email });
             try {
                 const sb = await loadSupabase();
-                if (!sb) return null;
+                if (!sb) { DEBUG.warn('Storage.syncFromSupabase', 'no supabase client'); return null; }
 
-                const { data: user } = await sb.from('training_users')
+                const { data: user, error: userErr } = await sb.from('training_users')
                     .select('*').eq('email', email).single();
-                if (!user) return null;
+                if (userErr) DEBUG.log('Storage.syncFromSupabase', 'user query returned error (often "no rows")', { code: userErr.code, message: userErr.message });
+                if (!user) { DEBUG.log('Storage.syncFromSupabase', 'no remote user row'); return null; }
 
                 const { data: progress } = await sb.from('training_progress')
                     .select('*').eq('email', email);
@@ -237,7 +298,7 @@ const TrainingEngine = (() => {
                     };
                 });
 
-                return {
+                const result = {
                     user: { email: user.email, name: user.name, registered: user.registered_at },
                     xp: user.xp,
                     level: user.level,
@@ -257,52 +318,86 @@ const TrainingEngine = (() => {
                     formativeCorrect: user.formative_correct,
                     formativeTotal: user.formative_total
                 };
-            } catch { return null; }
+                DEBUG.log('Storage.syncFromSupabase', 'done', { xp: result.xp, modules: Object.keys(modules).length, feedback: result.feedback.length });
+                return result;
+            } catch (e) { DEBUG.error('Storage.syncFromSupabase', 'failed', e); return null; }
         }
     };
 
     // ── User Management ────────────────────────────────────────────
     const User = {
         async login(email, name) {
+            DEBUG.log('User.login', 'enter', { email, nameLen: (name||'').length });
             email = email.toLowerCase().trim();
             if (!email.endsWith(CONFIG.DOMAIN)) {
+                DEBUG.warn('User.login', 'rejected: wrong domain', { email });
                 return { ok: false, error: `Email must end with ${CONFIG.DOMAIN}` };
             }
             if (!name || name.trim().length < 2) {
+                DEBUG.warn('User.login', 'rejected: name too short');
                 return { ok: false, error: 'Please enter your full name' };
             }
 
             let state = Storage.load();
             if (state && state.user && state.user.email === email) {
+                DEBUG.log('User.login', 'reusing local state for email', { xp: state.xp, modules: Object.keys(state.modules||{}).length });
                 state.user.name = name.trim();
                 _state = state;
             } else {
+                DEBUG.log('User.login', 'creating fresh default state');
                 _state = Storage.getDefaultState(email, name.trim());
             }
 
             // Merge remote state (higher XP wins)
             const remote = await Storage.syncFromSupabase(email);
             if (remote && remote.xp > _state.xp) {
+                DEBUG.log('User.login', 'remote XP higher — merging remote state', { localXp: _state.xp, remoteXp: remote.xp });
                 remote.user.name = name.trim();
                 _state = remote;
+            } else {
+                DEBUG.log('User.login', 'keeping local state', { remoteAvailable: !!remote, localXp: _state.xp, remoteXp: remote?.xp });
             }
 
             Streaks.updateLogin();
             _state._authenticated = true;
+            _state._authExpiresAt = Date.now() + CONFIG.SESSION_TTL_MS;
+            DEBUG.log('User.login', 'session created', { expiresAt: new Date(_state._authExpiresAt).toISOString() });
+
+            // Resolve server-side admin flag. RLS still enforces — this just drives UI.
+            try {
+                const sb = await loadSupabase();
+                if (sb) {
+                    DEBUG.log('User.login', 'calling RPC is_user_admin', { p_email: email });
+                    const { data: isAdmin, error } = await sb.rpc('is_user_admin', { p_email: email });
+                    if (error) DEBUG.error('User.login', 'is_user_admin RPC error', error);
+                    _state._isAdmin = !!isAdmin;
+                    DEBUG.log('User.login', 'admin flag resolved (server)', { isAdmin: _state._isAdmin });
+                } else {
+                    _state._isAdmin = CONFIG.ADMIN_EMAILS.includes(email);
+                    DEBUG.warn('User.login', 'supabase unavailable — admin flag from fallback list', { isAdmin: _state._isAdmin });
+                }
+            } catch (e) {
+                DEBUG.error('User.login', 'admin resolution crashed — using fallback list', e);
+                _state._isAdmin = CONFIG.ADMIN_EMAILS.includes(email);
+            }
+
             Storage.save(_state);
             Storage.syncToSupabase(_state);
+            DEBUG.log('User.login', 'done', { email, isAdmin: _state._isAdmin, xp: _state.xp });
             return { ok: true, state: _state };
         },
 
         logout() {
+            DEBUG.log('User.logout', 'clearing session');
             _state = null;
             try {
                 const state = Storage.load();
                 if (state) {
                     state._authenticated = false;
+                    state._authExpiresAt = 0;
                     Storage.save(state);
                 }
-            } catch {}
+            } catch (e) { DEBUG.error('User.logout', 'save failed', e); }
         },
 
         current() {
@@ -313,58 +408,107 @@ const TrainingEngine = (() => {
 
         isAdmin() {
             if (!_state?.user) return false;
+            // Server-verified flag set at login time via is_user_admin RPC.
+            // Name-based admin bypass was removed — it allowed anyone named "faraz" to self-elevate.
+            if (typeof _state._isAdmin === 'boolean') return _state._isAdmin;
             const email = normalizeIdentity(_state.user.email);
-            const name = normalizeIdentity(_state.user.name);
-            return CONFIG.ADMIN_EMAILS.includes(email) || CONFIG.ADMIN_NAMES.includes(name);
+            const result = CONFIG.ADMIN_EMAILS.includes(email);
+            DEBUG.log('User.isAdmin', 'fallback check (no server flag)', { email, result });
+            return result;
         },
 
         isLoggedIn() {
-            return !!User.current();
+            const s = User.current();
+            if (!s || !s._authenticated) { DEBUG.log('User.isLoggedIn', 'no auth'); return false; }
+            if (s._authExpiresAt && s._authExpiresAt < Date.now()) {
+                DEBUG.warn('User.isLoggedIn', 'session expired — logging out', { expiredAt: new Date(s._authExpiresAt).toISOString() });
+                User.logout();
+                return false;
+            }
+            return true;
         }
     };
 
     // ── Auth (Password via Supabase RPC) ─────────────────────────
     const Auth = {
         async verifyPassword(email, hash) {
+            const t0 = performance.now();
+            DEBUG.log('Auth.verifyPassword', 'enter', { email, hash: DEBUG.redact(hash) });
             try {
                 const sb = await loadSupabase();
-                if (!sb) return null; // null = server unavailable
+                if (!sb) { DEBUG.warn('Auth.verifyPassword', 'supabase unavailable'); return null; }
                 const { data, error } = await sb.rpc('verify_password', {
                     p_email: email.toLowerCase().trim(),
                     p_hash: hash
                 });
-                if (error) { console.error('verify_password error:', error); return null; }
+                const elapsed = Math.round(performance.now() - t0);
+                if (error) { DEBUG.error('Auth.verifyPassword', 'RPC error', error); return null; }
+                DEBUG.log('Auth.verifyPassword', 'RPC returned', { verified: data === true, elapsedMs: elapsed });
                 return data === true;
-            } catch { return null; }
+            } catch (e) { DEBUG.error('Auth.verifyPassword', 'exception', e); return null; }
         },
 
         async registerPassword(email, hash) {
             email = email.toLowerCase().trim();
+            DEBUG.log('Auth.registerPassword', 'enter', { email, hash: DEBUG.redact(hash) });
             if (!email.endsWith(CONFIG.DOMAIN)) {
+                DEBUG.warn('Auth.registerPassword', 'rejected: wrong domain');
                 return { ok: false, error: `Email must end with ${CONFIG.DOMAIN}` };
             }
             try {
                 const sb = await loadSupabase();
-                if (!sb) return { ok: false, error: 'Could not connect to server.' };
+                if (!sb) { DEBUG.warn('Auth.registerPassword', 'supabase unavailable'); return { ok: false, error: 'Could not connect to server.' }; }
 
-                // Check if user already has a password
-                const { data: existing } = await sb.rpc('check_user_exists', { p_email: email });
+                DEBUG.log('Auth.registerPassword', 'calling check_user_exists');
+                const { data: existing, error: checkErr } = await sb.rpc('check_user_exists', { p_email: email });
+                if (checkErr) DEBUG.error('Auth.registerPassword', 'check_user_exists error', checkErr);
+                DEBUG.log('Auth.registerPassword', 'check_user_exists result', { exists: existing });
                 if (existing) {
                     return { ok: false, error: 'Account already exists. Please sign in.' };
                 }
 
+                DEBUG.log('Auth.registerPassword', 'calling register_password');
                 const { error } = await sb.rpc('register_password', {
                     p_email: email,
                     p_hash: hash
                 });
                 if (error) {
-                    console.error('register_password error:', error);
+                    DEBUG.error('Auth.registerPassword', 'RPC error', error);
                     return { ok: false, error: 'Registration failed. Please try again.' };
                 }
+                DEBUG.log('Auth.registerPassword', 'success');
                 return { ok: true };
             } catch (err) {
-                console.error('Registration error:', err);
+                DEBUG.error('Auth.registerPassword', 'exception', err);
                 return { ok: false, error: 'Registration failed.' };
+            }
+        },
+
+        async changePassword(email, oldHash, newHash) {
+            email = email.toLowerCase().trim();
+            DEBUG.log('Auth.changePassword', 'enter', { email, oldHash: DEBUG.redact(oldHash), newHash: DEBUG.redact(newHash) });
+            if (!email.endsWith(CONFIG.DOMAIN)) {
+                DEBUG.warn('Auth.changePassword', 'rejected: wrong domain');
+                return { ok: false, error: `Email must end with ${CONFIG.DOMAIN}` };
+            }
+            try {
+                const sb = await loadSupabase();
+                if (!sb) { DEBUG.warn('Auth.changePassword', 'supabase unavailable'); return { ok: false, error: 'Could not connect to server.' }; }
+                const { data, error } = await sb.rpc('change_password', {
+                    p_email: email,
+                    p_old_hash: oldHash,
+                    p_new_hash: newHash
+                });
+                if (error) {
+                    DEBUG.error('Auth.changePassword', 'RPC error', error);
+                    return { ok: false, error: 'Password change failed.' };
+                }
+                DEBUG.log('Auth.changePassword', 'RPC returned', { changed: data === true });
+                if (data === true) return { ok: true };
+                return { ok: false, error: 'Current password is incorrect.' };
+            } catch (err) {
+                DEBUG.error('Auth.changePassword', 'exception', err);
+                return { ok: false, error: 'Password change failed.' };
             }
         }
     };

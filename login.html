@@ -39,13 +39,7 @@
             background: radial-gradient(circle at center, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.7) 100%);
             z-index: 1;
         }
-        .login-container {
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            max-width: 440px;
-            padding: 2rem;
-        }
+        .login-container { position: relative; z-index: 10; width: 100%; max-width: 440px; padding: 2rem; }
         .glass-card {
             background: rgba(255, 255, 255, 0.08);
             backdrop-filter: blur(60px) saturate(180%);
@@ -56,10 +50,7 @@
             padding: 3rem 2.5rem;
             animation: floatIn 0.8s ease;
         }
-        @keyframes floatIn {
-            from { opacity: 0; transform: translateY(30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
+        @keyframes floatIn { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
         .logo { text-align: center; margin-bottom: 2rem; }
         .logo h1 {
             font-size: 1.8rem;
@@ -71,42 +62,21 @@
         }
         .logo p { color: rgba(255, 255, 255, 0.7); font-size: 0.95rem; }
         .form-group { margin-bottom: 1.5rem; }
-        .form-group label {
-            display: block;
-            color: rgba(255, 255, 255, 0.9);
-            font-size: 0.9rem;
-            font-weight: 600;
-            margin-bottom: 0.5rem;
-        }
+        .form-group label { display: block; color: rgba(255, 255, 255, 0.9); font-size: 0.9rem; font-weight: 600; margin-bottom: 0.5rem; }
         .form-group input {
-            width: 100%;
-            padding: 1rem 1.2rem;
+            width: 100%; padding: 1rem 1.2rem;
             background: rgba(255, 255, 255, 0.1);
             border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
+            border-radius: 12px; color: white; font-size: 1rem;
             transition: all 0.3s ease;
         }
         .form-group input::placeholder { color: rgba(255, 255, 255, 0.4); }
-        .form-group input:focus {
-            outline: none;
-            border-color: var(--stockholm-neon);
-            background: rgba(255, 255, 255, 0.15);
-            box-shadow: 0 0 20px rgba(0, 227, 169, 0.2);
-        }
+        .form-group input:focus { outline: none; border-color: var(--stockholm-neon); background: rgba(255, 255, 255, 0.15); box-shadow: 0 0 20px rgba(0, 227, 169, 0.2); }
         .submit-btn {
-            width: 100%;
-            padding: 1rem;
+            width: 100%; padding: 1rem;
             background: linear-gradient(135deg, var(--stockholm-neon), var(--malmo-green));
-            border: none;
-            border-radius: 12px;
-            color: white;
-            font-size: 1rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.4s ease;
-            margin-top: 1rem;
+            border: none; border-radius: 12px; color: white; font-size: 1rem;
+            font-weight: 700; cursor: pointer; transition: all 0.4s ease; margin-top: 1rem;
         }
         .submit-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0, 227, 169, 0.4); }
         .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
@@ -114,13 +84,7 @@
         .links a { color: var(--stockholm-neon); text-decoration: none; font-size: 0.9rem; }
         .links a:hover { color: var(--white); }
         .divider { color: rgba(255, 255, 255, 0.4); margin: 0 0.8rem; }
-        .message {
-            border-radius: 8px;
-            padding: 1rem;
-            font-size: 0.9rem;
-            margin-bottom: 1.5rem;
-            display: none;
-        }
+        .message { border-radius: 8px; padding: 1rem; font-size: 0.9rem; margin-bottom: 1.5rem; display: none; }
         .message.error { background: rgba(249, 45, 99, 0.2); border: 1px solid var(--orlando-red); color: var(--orlando-red); }
         .message.success { background: rgba(0, 227, 169, 0.2); border: 1px solid var(--stockholm-neon); color: var(--stockholm-neon); }
         .message.show { display: block; }
@@ -137,6 +101,10 @@
             <div id="success-message" class="message success"></div>
             <form id="login-form">
                 <div class="form-group">
+                    <label for="name">Full Name</label>
+                    <input type="text" id="name" name="name" placeholder="Your full name" required autocomplete="name">
+                </div>
+                <div class="form-group">
                     <label for="email">Email</label>
                     <input type="email" id="email" name="email" placeholder="name@vysusgroup.com" required autocomplete="email">
                 </div>
@@ -147,50 +115,118 @@
                 <button type="submit" class="submit-btn" id="submit-btn">Sign In</button>
             </form>
             <div class="links">
-                <a href="/forgot-password">Forgot password?</a>
+                <a href="/forgot-password.html">Forgot password?</a>
                 <span class="divider">|</span>
-                <a href="/register">Create account</a>
+                <a href="/register.html">Create account</a>
             </div>
         </div>
     </div>
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+    <script src="training-engine.js"></script>
+    <script src="auth-debug.js"></script>
     <script>
+        const DBG = (s, m, d) => window.vysusDebug?.log('login.html:' + s, m, d);
+        DBG('init', 'page loaded', { url: location.href });
         const form = document.getElementById('login-form');
         const errorMessage = document.getElementById('error-message');
         const successMessage = document.getElementById('success-message');
         const submitBtn = document.getElementById('submit-btn');
 
+        // Same PBKDF2-SHA256 (100k, email-salt) as index.html — existing stored credentials still verify.
+        async function hashPassword(password, salt) {
+            const enc = new TextEncoder();
+            const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits({
+                name: 'PBKDF2', salt: enc.encode(salt), iterations: 100000, hash: 'SHA-256'
+            }, keyMaterial, 256);
+            return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function checkLockout(email) {
+            try {
+                const data = JSON.parse(localStorage.getItem('vysus_login_attempts') || '{}');
+                const r = data[email];
+                if (r && r.lockedUntil > Date.now()) {
+                    const mins = Math.ceil((r.lockedUntil - Date.now()) / 60000);
+                    return `Too many failed attempts. Try again in ${mins} minute(s).`;
+                }
+                return null;
+            } catch { return null; }
+        }
+        function recordAttempt(email, success) {
+            try {
+                const data = JSON.parse(localStorage.getItem('vysus_login_attempts') || '{}');
+                if (success) { delete data[email]; }
+                else {
+                    const r = data[email] || { fails: 0, lockedUntil: 0 };
+                    r.fails = (r.fails || 0) + 1;
+                    if (r.fails >= 5) { r.lockedUntil = Date.now() + 15 * 60 * 1000; r.fails = 0; }
+                    data[email] = r;
+                }
+                localStorage.setItem('vysus_login_attempts', JSON.stringify(data));
+            } catch {}
+        }
+
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             errorMessage.classList.remove('show');
             successMessage.classList.remove('show');
+
+            const email = document.getElementById('email').value.trim().toLowerCase();
+            const name = document.getElementById('name').value.trim();
+            const password = document.getElementById('password').value;
+            DBG('submit', 'form submitted', { email, nameLen: name.length, passwordLen: password.length });
+
+            if (!email.endsWith('@vysusgroup.com')) {
+                DBG('submit', 'rejected: domain');
+                errorMessage.textContent = 'Only @vysusgroup.com emails are permitted.';
+                errorMessage.classList.add('show'); return;
+            }
+            const lockMsg = checkLockout(email);
+            if (lockMsg) { DBG('submit', 'rejected: lockout', { lockMsg }); errorMessage.textContent = lockMsg; errorMessage.classList.add('show'); return; }
+
             submitBtn.disabled = true;
             submitBtn.textContent = 'Signing in...';
 
             try {
-                const response = await fetch('/api/auth/login', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        email: document.getElementById('email').value,
-                        password: document.getElementById('password').value
-                    }),
-                });
-                const data = await response.json();
-                if (response.ok) {
+                DBG('submit', 'hashing password (PBKDF2 100k)…');
+                const hash = await hashPassword(password, email);
+                DBG('submit', 'hash computed', { hashPreview: hash.slice(0,8) + '…', len: hash.length });
+                const verified = await TrainingEngine.Auth.verifyPassword(email, hash);
+                DBG('submit', 'verify result', { verified });
+
+                if (verified === null) {
+                    errorMessage.textContent = 'Could not connect to server. Please try again.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
+                    return;
+                }
+                if (!verified) {
+                    recordAttempt(email, false);
+                    errorMessage.textContent = 'Invalid email or password.';
+                    errorMessage.classList.add('show');
+                    submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
+                    return;
+                }
+
+                recordAttempt(email, true);
+                DBG('submit', 'calling User.login');
+                const result = await TrainingEngine.User.login(email, name);
+                DBG('submit', 'User.login result', { ok: result.ok, error: result.error, isAdmin: result.state?._isAdmin });
+                if (result.ok) {
                     successMessage.textContent = 'Login successful! Redirecting...';
                     successMessage.classList.add('show');
-                    setTimeout(() => { window.location.href = '/'; }, 1000);
+                    setTimeout(() => { window.location.href = '/'; }, 800);
                 } else {
-                    errorMessage.textContent = data.detail || 'Invalid email or password';
+                    errorMessage.textContent = result.error || 'Login failed.';
                     errorMessage.classList.add('show');
-                    submitBtn.disabled = false;
-                    submitBtn.textContent = 'Sign In';
+                    submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
                 }
-            } catch (error) {
+            } catch (err) {
+                window.vysusDebug?.error('login.html:submit', 'exception', err);
                 errorMessage.textContent = 'An error occurred. Please try again.';
                 errorMessage.classList.add('show');
-                submitBtn.disabled = false;
-                submitBtn.textContent = 'Sign In';
+                submitBtn.disabled = false; submitBtn.textContent = 'Sign In';
             }
         });
     </script>

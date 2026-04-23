@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Project Handover Process | Grid Engineering Training</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⚡</text></svg>">
+    <link rel="stylesheet" href="../../module-styles.css">
+</head>
+<body>
+    <div class="bg-container" id="bg-container"></div>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <a href='/'>← Portal</a>
+            <span class="module-title-bar" id="module-title-bar">Loading...</span>
+        </div>
+        <div class="top-bar-right">
+            <span class="timer-pill" id="timer-display">0m 00s</span>
+            <span class="xp-pill" id="xp-display">0 XP</span>
+        </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="section-nav" id="section-nav"></div>
+    <div class="content-wrap" id="content-wrap"></div>
+
+    <script>
+    window.MODULE_DATA = {
+        id: 'project-handover-process',
+        title: 'Project Handover Process',
+        level: 'senior',
+        xp: 750,
+        backgroundImage: 'https://images.unsplash.com/photo-1520607162513-77705c0f0d4a?w=1920&q=90',
+        sections: [
+            {
+                title: 'Project Information Baseline',
+                subtitle: 'Senior Level • 750 XP • Establish the minimum project data set before ownership changes',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Why Handover Matters</h2><p>A good handover is a <strong>risk-control activity</strong>, not just an administrative close-out. The incoming owner should be able to understand current project status, identify the key technical constraints, and continue work without recovering context from emails or memory.</p><p>The document source for this module is a structured checklist, so the right use of it is to support a generic handover framework with specific fields that should always be captured.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Minimum Handover Outcomes</h3><ul><li><strong>Clear ownership</strong> for remaining workstreams and open issues</li><li><strong>Single source of truth</strong> for the latest technical basis and submission package</li><li><strong>Visible risk profile</strong> so unresolved issues are not mistaken for completed work</li><li><strong>Decision traceability</strong> for key project assumptions and agreed positions</li></ul>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Core Project Information</h3><table class="data-table"><thead><tr><th>Field</th><th>Why It Matters</th></tr></thead><tbody><tr><td>Project name and developer history</td><td>Prevents naming drift across reports, models, and correspondence</td></tr><tr><td>Project stage, Gantt chart, and financial status</td><td>Defines schedule pressure, delivery maturity, and commercial context</td></tr><tr><td>Nameplate and POC capacity at standard and derated conditions</td><td>Anchors study assumptions, registration positions, and performance discussions</td></tr><tr><td>Geographical connection point and voltage level</td><td>Identifies the network context for every technical file</td></tr><tr><td>SCR, X/R, and fault level ranges</td><td>Frames the system strength and network basis used in studies</td></tr></tbody></table>'
+                    },
+                    {
+                        type: 'info',
+                        title: 'Do Not Skip Capacity And Control Settings',
+                        text: 'The checklist explicitly calls for generation technologies, OEM allocation, droop settings, and inverter or PPC HVRT/LVRT thresholds. Those details matter because a handover is incomplete if the project status is known but the active technical control basis is not.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'Why should the handover document include both nameplate capacity and POC capacity?',
+                        options: [
+                            'Because they are always numerically identical',
+                            'Because they are used in different technical and commercial contexts and should not be conflated',
+                            'Because only POC capacity is needed for studies',
+                            'Because nameplate capacity is used only for marketing'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. Nameplate and POC capacity serve different purposes and should be captured separately.',
+                        incorrectFeedback: 'The handover should keep nameplate and POC capacity separate because each is used in different study, registration, and reporting contexts.'
+                    },
+                    {
+                        question: 'Which group belongs in the core baseline section of a project handover?',
+                        options: [
+                            'Project stage, Gantt chart, financial status, and connection point details',
+                            'Only the project name and contact list',
+                            'Only the final submitted GPS file',
+                            'Only the simulation folder path'
+                        ],
+                        correct: 0,
+                        correctFeedback: 'Correct. The baseline must cover stage, schedule, commercial status, and connection context.',
+                        incorrectFeedback: 'The baseline should include stage, schedule, financial status, and the core connection point details.'
+                    }
+                ]
+            },
+            {
+                title: 'Stakeholders And Contact Control',
+                subtitle: 'Make ownership and interfaces explicit',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Stakeholder Register</h2><p>The source document explicitly calls for contact information across the full project chain. That matters because handovers often fail not on missing files, but on missing <strong>interface ownership</strong>.</p><p>A new lead should be able to identify who owns decisions, who reviews outputs, and who must be consulted before technical assumptions are changed.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Contacts To Capture</h3><table class="data-table"><thead><tr><th>Stakeholder Group</th><th>Typical Role In Handover</th></tr></thead><tbody><tr><td>Internal project lead and team members</td><td>Define current working ownership and retained knowledge</td></tr><tr><td>NSP and AEMO contacts</td><td>Anchor formal interface history and pending queries</td></tr><tr><td>Developer contacts</td><td>Clarify client expectations and commercial priorities</td></tr><tr><td>OEM contacts</td><td>Support model, protection, and performance clarification</td></tr><tr><td>Third-party advisers or consultants</td><td>Preserve responsibility for specialist inputs and assumptions</td></tr></tbody></table>'
+                    },
+                    {
+                        type: 'mentor',
+                        title: 'List All From The Beginning',
+                        text: 'The checklist calls out listing all project leads and team members from the beginning. That matters because historical owners often explain why a decision exists, even if they no longer hold the day-to-day role.'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>What The Incoming Owner Must Know</h3><ul><li>Which stakeholder is waiting on a response</li><li>Which stakeholder approvals are already locked in</li><li>Which commitments were verbal and need formal confirmation</li><li>Which technical topics should not be reopened without escalation</li></ul><h3>Minimum Interface Controls</h3><ul><li>Record current contact person or team for each external party</li><li>State whether the interface is active, pending, or dormant</li><li>Capture the last material exchange or current action owner</li><li>Identify where specialist advice is being relied upon</li></ul>'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'Why is it useful to keep a history of internal leads and team members in the handover?',
+                        options: [
+                            'Only for HR reporting',
+                            'Because previous owners may explain technical decisions and unresolved assumptions',
+                            'It is not useful once ownership changes',
+                            'Only the current project manager matters'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. Historical ownership preserves decision context.',
+                        incorrectFeedback: 'Historical leads and contributors help explain why technical positions were taken and what remains unresolved.'
+                    },
+                    {
+                        question: 'Which contact grouping is most important to preserve interface continuity?',
+                        options: [
+                            'Only the client contact',
+                            'Only the OEM contact',
+                            'Internal, NSP, AEMO, developer, OEM, and specialist advisers',
+                            'Only whoever attended the last meeting'
+                        ],
+                        correct: 2,
+                        correctFeedback: 'Correct. A complete interface map is needed for continuity.',
+                        incorrectFeedback: 'The handover should preserve the full contact chain: internal team, NSP, AEMO, developer, OEM, and any specialist advisers.'
+                    }
+                ]
+            },
+            {
+                title: 'Study Files And Software Models',
+                subtitle: 'Preserve the analytical basis of the project',
+                content: [
+                    {
+                        type: 'html',
+                        html: '<div class="glass"><h2>Recommended Handover Sequence</h2><div class="process-flow"><div class="process-step"><div class="step-number">1</div><div class="step-title">Prepare</div><div class="step-desc">Consolidate status, artefacts, assumptions, and open actions</div></div><div class="process-step"><div class="step-number">2</div><div class="step-title">Review</div><div class="step-desc">Walk the incoming owner through the project story and current risk profile</div></div><div class="process-step"><div class="step-number">3</div><div class="step-title">Confirm</div><div class="step-desc">Check understanding, clarify boundaries, and assign ownership</div></div><div class="process-step"><div class="step-number">4</div><div class="step-title">Record</div><div class="step-desc">Issue the handover note with owners, dates, and references</div></div></div></div>'
+                    },
+                    {
+                        type: 'mentor',
+                        title: 'Do The Walkthrough Live',
+                        text: 'A shared walkthrough catches missing context that static documents do not. The outgoing lead should explain not only what the team decided, but also what was considered and rejected, and where hidden sensitivities remain.'
+                    },
+                    {
+                        type: 'warning',
+                        title: 'Common Handover Failure Modes',
+                        text: 'Typical failures include outdated attachments, unclear action ownership, undocumented client commitments, and risks buried in email threads. The incoming owner should never have to infer project risk from scattered correspondence.'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Handover Meeting Agenda</h3><ul><li>Project objective and current phase</li><li>Recent decisions and why they were made</li><li>Open technical risks and their consequence</li><li>Immediate next steps for the next 2 weeks</li><li>Escalation triggers and stakeholder expectations</li></ul>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Wide Area Studies And Source Files</h3><p>The extracted checklist places strong emphasis on file locations for wide area studies, raw snapshots, contingency lists, inter-trip schemes, snapshot tuning instructions, and committed generator integrations. That tells you the handover is not just about final reports. It is also about the <strong>working analytical environment</strong>.</p><p>A strong senior handover leaves the incoming engineer operational on day one, which means the study basis must be traceable as well as the final conclusions.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Study Inputs That Must Be Traceable</h3><ul><li><strong>Raw snapshots</strong> received from AEMO or NSP</li><li><strong>Contingency list</strong> used in studies</li><li><strong>Inter-trip scheme details</strong> where applicable</li><li><strong>Snapshot tuning instructions</strong></li><li><strong>Committed generator list and PSSE files</strong> that were integrated into the study case</li></ul>'
+                    },
+                    {
+                        type: 'tech',
+                        title: 'Software Model Register',
+                        text: 'The handover should record file locations for SMIB model packages and for each active software environment, including PSSE v34, PSSE v36, PSCAD, and PowerFactory. It should also state OEM model versions for PV, BESS, WTG, PPC, and synchronous machine models where relevant.'
+                    },
+                    {
+                        type: 'warning',
+                        title: 'File Location Without Version Is Not Enough',
+                        text: 'A folder path alone is not a handover. The incoming owner needs the exact model version or revision basis so later results can be reconciled against earlier submissions and agreed technical positions.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'Why should the handover include both study file locations and model version details?',
+                        options: [
+                            'Because folder paths by themselves are enough',
+                            'Because the incoming owner must be able to reproduce or verify the analytical basis of the project',
+                            'Because only the latest report matters',
+                            'Because model versioning applies only to OEMs'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. Reproducibility and traceability depend on both location and version.',
+                        incorrectFeedback: 'The handover should preserve both file locations and specific versions so the project analytical basis can be reproduced or checked.'
+                    },
+                    {
+                        question: 'Which item is part of the study-environment handover rather than just final reporting?',
+                        options: [
+                            'Contingency list and raw snapshots',
+                            'Only the cover page of the GPS',
+                            'Only the invoice pack',
+                            'Only the final presentation deck'
+                        ],
+                        correct: 0,
+                        correctFeedback: 'Correct. Raw snapshots and contingency lists are part of the working study basis.',
+                        incorrectFeedback: 'Raw snapshots, contingency lists, and other study inputs are part of the working environment and belong in the handover.'
+                    }
+                ]
+            },
+            {
+                title: 'Submission Package And Latest Simulations',
+                subtitle: 'Tie the document set back to formal submissions and current outputs',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Latest Submission Package</h2><p>The document checklist names the key artefacts that should be locatable from the latest submission package. These include the GPS, Connection Study Report, DMAT Report, PSDS, VCS, mapping sheets, RUG files, SSIAG, Harmonics Report, Filter Sizing Report, and OEM declarations of lowest withstand SCR.</p><p>A useful handover makes it clear which one is the <strong>latest submitted version</strong>, where supporting files live, and whether any newer technical basis exists that has not yet been formally incorporated.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Submission Artefact Categories</h3><table class="data-table"><thead><tr><th>Category</th><th>Examples</th></tr></thead><tbody><tr><td>Formal submission documents</td><td>GPS, Connection Study Report, DMAT Report, PSDS, VCS</td></tr><tr><td>Model alignment material</td><td>PSSE-PSCAD mapping sheets, PSCAD RUG, PSSE RUG</td></tr><tr><td>Grid performance studies</td><td>SSIAG, Harmonics Report, Filter Sizing Report</td></tr><tr><td>OEM support evidence</td><td>Lowest withstand SCR declaration, model details, technical clarifications</td></tr><tr><td>Latest simulation outputs</td><td>Simulation type list and current storage location</td></tr></tbody></table>'
+                    },
+                    {
+                        type: 'success',
+                        title: 'Minimum Closing Standard',
+                        text: 'At handover, the incoming owner should know which package was last submitted, which simulations support it, and whether any newer model or study output exists that has not yet been formally incorporated.'
+                    },
+                    {
+                        type: 'info',
+                        title: 'Generic But Actionable',
+                        text: 'Even if the handover is kept generic, it should still define a practical rule: every listed artefact needs an owner, a latest location, and a status such as draft, issued, submitted, superseded, or pending update.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'What is the main reason to link the latest submission package to the latest simulation files?',
+                        options: [
+                            'To make the folder structure larger',
+                            'To show whether the submitted position is consistent with the current technical basis',
+                            'Because simulation files replace formal reports',
+                            'Only to support billing'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. The handover should reveal whether the submitted package still matches the current technical basis.',
+                        incorrectFeedback: 'The latest submission package should be linked to the latest simulations so the team can see whether the formal position still matches the current basis.'
+                    },
+                    {
+                        question: 'Which status practice makes a handover package actionable?',
+                        options: [
+                            'Leave file status implied by folder date',
+                            'Record owner, file location, and status such as draft, submitted, superseded, or pending update',
+                            'Store all files without naming conventions',
+                            'Keep status only in email threads'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. Owner, location, and explicit status make the pack usable.',
+                        incorrectFeedback: 'A useful handover should record owner, location, and explicit document status for each key artefact.'
+                    }
+                ]
+            }
+        ],
+        assessment: [
+            {
+                question: 'Which capacity values should be distinguished in the project handover baseline?',
+                options: [
+                    'Only nameplate capacity',
+                    'Nameplate and POC capacity, including standard and derated conditions where applicable',
+                    'Only derated POC capacity',
+                    'Only values used in the last client presentation'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Why should SCR, X/R, and fault level be included in the handover?',
+                options: [
+                    'They are optional formatting details',
+                    'They define the network context that underpins technical studies and assumptions',
+                    'They are relevant only after commissioning',
+                    'They matter only to finance teams'
+                ],
+                correct: 1
+            },
+            {
+                question: 'What is the strongest reason to preserve stakeholder contact chains across the whole project history?',
+                options: [
+                    'To create a longer contact list',
+                    'To preserve interface ownership and decision context',
+                    'To avoid using formal records',
+                    'To replace the need for status updates'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Which of the following belongs in the working study environment handover?',
+                options: [
+                    'Raw snapshots, contingency lists, and tuning instructions',
+                    'Only final signed PDFs',
+                    'Only the latest invoice register',
+                    'Only verbal instructions from the last meeting'
+                ],
+                correct: 0
+            },
+            {
+                question: 'Why are model version details required alongside model file locations?',
+                options: [
+                    'Because location is enough and version is optional',
+                    'Because file names are always self-explanatory',
+                    'Because traceability and reproducibility depend on both location and exact version',
+                    'Because only OEM teams need that information'
+                ],
+                correct: 2
+            },
+            {
+                question: 'Which software environments were explicitly represented in the source handover checklist?',
+                options: [
+                    'Only PSCAD',
+                    'PSSE, PSCAD, PowerFactory, and SMIB-related model packages',
+                    'Only Excel and PowerPoint',
+                    'Only proprietary OEM tools'
+                ],
+                correct: 1
+            },
+            {
+                question: 'What should the handover clarify about the latest submission package?',
+                options: [
+                    'Only where the cover page is stored',
+                    'Which package was last submitted and what supporting artefacts and simulations relate to it',
+                    'Only who approved the commercial budget',
+                    'Only the last meeting date'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Which item is an example of model alignment or bridging material in a handover package?',
+                options: [
+                    'PSSE-PSCAD mapping sheets',
+                    'Holiday calendar',
+                    'Travel expense form',
+                    'Procurement invoice summary'
+                ],
+                correct: 0
+            },
+            {
+                question: 'What does a generic but usable handover rule require for each key artefact?',
+                options: [
+                    'Only a document title',
+                    'Owner, latest location, and explicit status',
+                    'Only a file size',
+                    'Only the date it was first created'
+                ],
+                correct: 1
+            },
+            {
+                question: 'If newer simulation outputs exist after the last formal submission, what should the handover make clear?',
+                options: [
+                    'Nothing, because the submission package automatically updates itself',
+                    'Whether the current technical basis has moved beyond the last submitted package',
+                    'Only that simulations were run',
+                    'Only the name of the engineer who ran them'
+                ],
+                correct: 1
+            }
+        ]
+    };
+    </script>
+    <script src="../../training-engine.js"></script>
+    <script src="../../module-renderer.js"></script>
+</body>
+</html>

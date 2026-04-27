@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">AEMO WAN Studies-RUG Integration | Grid Engineering Training</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+    <link rel="stylesheet" href="../../module-styles.css">
+</head>
+<body>
+    <div class="bg-container" id="bg-container"></div>
+    <div class="top-bar">
+        <div class="top-bar-left">
+            <a href="/">&larr; Portal</a>
+            <span class="module-title-bar" id="module-title-bar">Loading...</span>
+        </div>
+        <div class="top-bar-right">
+            <span class="timer-pill" id="timer-display">0m 00s</span>
+            <span class="xp-pill" id="xp-display">0 XP</span>
+        </div>
+    </div>
+    <div class="progress-track"><div class="progress-fill" id="progress-fill"></div></div>
+    <div class="section-nav" id="section-nav"></div>
+    <div class="content-wrap" id="content-wrap"></div>
+    <script>
+    window.MODULE_DATA = {
+        id: 'aemo-wan-studies-rug-integration',
+        title: 'AEMO WAN Studies-RUG Integration',
+        level: 'senior',
+        xp: 850,
+        backgroundImage: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1920&q=90',
+        sections: [
+            {
+                title: 'Preliminary Check',
+                subtitle: 'Senior Level • 850 XP • Decide whether to retain, update, or freshly integrate a RUG',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Your Scenario</h2><p>You are supporting a grid connection project where the <strong>WAN studies workstream</strong> is progressing in parallel with the broader <strong>RUG integration process</strong>. The technical challenge is not just running studies. It is making sure assumptions, versions, constraints, and actions from WAN studies are transferred into the RUG workflow in a way that is traceable and usable by the wider project team.</p><p>This module introduces a practical framework for linking those two streams so the right evidence reaches the right stakeholders at the right time.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h2>Why the Preliminary Check Matters</h2><p>The source process starts in the <strong>NEM SAV file</strong> that already contains all previously integrated RUGs. Before inserting anything new, you first determine whether the plant is already in the case and whether the existing network and dynamic representation can be reused.</p><p>This is the first control point for avoiding duplicate plant entries, stale dynamics, and incorrect assumptions during WAN model integration.</p>'
+                    },
+                    {
+                        type: 'html',
+                        html: '<div class="glass"><div class="content-section"><h3>Source File</h3><p><a href="./RUG Integration Process_R0.pdf" target="_blank" rel="noopener">Open RUG Integration Process_R0.pdf</a></p></div></div>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Decision Branches</h3><ul><li><strong>Existing and switched on</strong>: check whether the plant has the same BOP as the SMIB model and compare the existing NEM DYR entry against the RUG SMIB DYR. If the dynamics match, leave the RUG in place. If they differ, comment out the old entry and update with the new DYR data using correct bus numbers.</li><li><strong>Existing but switched off</strong>: again compare BOP and dynamic data. If they match, switch the plant on, solve power flow, run a flat run, and check for additional ICS. If they do not match, switch the plant off, comment out the old DYR, and integrate a fresh new RUG.</li></ul>'
+                    },
+                    {
+                        type: 'info',
+                        title: 'Core Intent',
+                        text: 'The preliminary check is not administrative. It determines whether the model should be retained as-is, reactivated, or replaced. That decision controls the amount of rework in the rest of the integration process.'
+                    },
+                    {
+                        type: 'success',
+                        title: 'Target Outcome',
+                        text: 'By the end of this module, you should be able to choose the correct integration path, prepare a conflict-free SMIB package, connect it into the NEM case, update the DYR correctly, and validate the result with flat-run evidence.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'If a RUG already exists in the NEM SAV file and is switched on, what should you compare before deciding to leave it in place?',
+                        options: [
+                            'Only the project name and area number',
+                            'The BOP and the dynamic data in the NEM DYR versus the RUG SMIB DYR',
+                            'Only the branch loading report',
+                            'Only the swing generator dispatch'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. The PDF directs you to compare the plant BOP and then compare the dynamic data entries before deciding whether to keep or update the existing RUG.',
+                        incorrectFeedback: 'Not quite. The first comparison is between the existing plant BOP and the SMIB, then the NEM DYR entry versus the RUG SMIB DYR.'
+                    },
+                    {
+                        question: 'What is the correct action when a switched-off existing RUG has different dynamic data from the SMIB model?',
+                        options: [
+                            'Switch it on and continue without change',
+                            'Delete the entire NEM case',
+                            'Switch the plant off, comment out the old DYR, and integrate a fresh new RUG',
+                            'Ignore the dynamic mismatch if the bus name is familiar'
+                        ],
+                        correct: 2,
+                        correctFeedback: 'Correct. The source process explicitly says to switch it off, comment out the existing DYR, and integrate a fresh RUG when the dynamics differ.',
+                        incorrectFeedback: 'Not quite. A dynamic mismatch is treated as a fresh integration case, not a minor issue to ignore.'
+                    }
+                ]
+            },
+            {
+                title: 'Prepare the SMIB Model',
+                subtitle: 'Make the RUG case clean, unique, and ready for insertion into the NEM snapshot',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Preparing the RUG SMIB Model</h2><p>Next step is to move into controlled preparation of the RUG SMIB case. The aim is to transform the standalone SMIB model into a version that can be inserted into the latest NEM case without conflicting bus numbers or placeholder network elements.</p><ul><li>Track the integration sequence in a simple spreadsheet, naming the first inserted RUG as <strong>R1</strong> and recording assumptions in a <strong>Remarks</strong> column.</li><li>Check all bus numbers against the most recent NEM case using the check-bus number spreadsheet so the inserted RUG uses unique numbering.</li><li>Open the RUG SAV and SLD together, bind diagram changes to network data, and identify the branch containing the Thevenin <strong>R</strong> and <strong>X</strong>.</li></ul>'
+                    },
+                    {
+                        type: 'info',
+                        title: 'Version Discipline',
+                        text: 'A technically correct model is still weak training practice if nobody can tell which case, numbering set, or assumption basis it came from. The spreadsheet, naming convention, and remarks trail are part of the engineering control set, not optional admin.'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Required File and Network Edits</h3><ul><li>Delete the infinite bus, slack generator, and the Thevenin R/X branch from the SMIB representation.</li><li>Change any bus numbers that already exist in the most recent NEM case.</li><li>Identify the connection point from the last updated NEM case and copy all bus details into the RUG POC bus.</li><li>Set all buses to the correct area number, for example 3 for Victoria or 2 for NSW.</li><li>Save the prepared files as <strong>RUG_DM.sav</strong>, <strong>RUG_DM.sld</strong>, <strong>RUG_DM.raw</strong>, and <strong>RUG_DM.seq</strong>.</li></ul>'
+                    },
+                    {
+                        type: 'tech',
+                        title: 'Why This Step Exists',
+                        text: 'This stage converts a standalone SMIB into a network-compatible package. If numbering, POC details, or area assignments are wrong here, the rest of the integration and flat-run workflow becomes unreliable.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'Why does the process require checking bus numbers against the most recent NEM case with previously integrated RUGs?',
+                        options: [
+                            'To ensure all new RUG buses are unique before insertion',
+                            'To reduce the number of dynamic models in the case',
+                            'To match the old bus voltages exactly',
+                            'To avoid saving RAW and SEQ files'
+                        ],
+                        correct: 0,
+                        correctFeedback: 'Correct. The purpose is to avoid bus-number conflicts with the latest integrated case.',
+                        incorrectFeedback: 'Not quite. The bus-number check is there to preserve unique numbering when integrating into the most recent NEM case.'
+                    },
+                    {
+                        question: 'Which elements are explicitly removed from the SMIB during preparation?',
+                        options: [
+                            'The POC bus and generator terminal bus',
+                            'The infinite bus, slack generator, and Thevenin R/X branch',
+                            'All transformers and all lines',
+                            'Only the sequence data'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. Those placeholder SMIB elements are removed before the RUG is tied into the actual NEM network.',
+                        incorrectFeedback: 'Not quite. The PDF specifically calls for deleting the infinite bus, slack generator, and the branch containing the Thevenin R and X.'
+                    }
+                ]
+            },
+            {
+                title: 'Integrate into the NEM Case',
+                subtitle: 'Load the network files, solve power flow, and prove the inserted RUG behaves acceptably',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Network Integration Workflow</h2><p>Once the RUG files are prepared, the process loads the <strong>RAW</strong>, <strong>SEQ</strong>, and <strong>SLD</strong> into the NEM snapshot. Next check whether the imported data is truly active and electrically credible before the case is saved.</p><ul><li>Confirm RAW data has loaded by checking that the RUG elements are present and not left as empty pink placeholders.</li><li>Confirm SEQ data has loaded by verifying sequence data exists for the imported elements.</li><li>Set plant <strong>Pgen</strong> initially around 50% of Pmax or MBASE to improve convergence.</li><li>Ensure generators have correct <strong>Qmax</strong> and <strong>Qmin</strong> limits.</li></ul>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>What This Step Really Tests</h3><p>This stage is where model preparation turns into system evidence. A balanced review does not stop at “the case solved.” It asks whether the integrated plant behaves well enough that nearby generation, voltage profile, interconnector loading, and swing dispatch still look credible.</p>'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Power Flow and Network Health Checks</h3><ul><li>Solve power flow using <strong>Robust Solution</strong> (2x)</li><li>Solve power flow using <strong>Newton Raphson</strong> (3x)</li><li>Check that plant Qgen settles well away from Q limits; if not, adjust scheduled voltage and repeat the solves.</li><li>Run the voltage level report and ensure there are no bus voltage violations beyond <strong>±10%</strong>.</li><li>Run the branch loading report to confirm no branch overloads.</li><li>Run the reactive power limit report and prioritize existing generators at or above <strong>30 MW</strong> and SVCs.</li><li>Check swing generator P and Q dispatch are within limits and adjust nearby generation if required.</li><li>Check interconnectors are not overloaded before saving the case as <strong>R1_RUG.sav</strong>.</li></ul>'
+                    },
+                    {
+                        type: 'mentor',
+                        title: 'Practical Reading of the Step',
+                        text: 'This part of the process is effectively a network acceptance check. The RUG is not considered integrated just because it loads. It must converge, respect limits, and avoid creating obvious voltage, loading, or dispatch issues.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'Why does the process recommend setting initial Pgen near 50% of Pmax or MBASE?',
+                        options: [
+                            'To maximize branch loading immediately',
+                            'To ensure the power flow solution converges more reliably',
+                            'To force the swing generator out of limits',
+                            'To keep Qgen fixed at zero'
+                        ],
+                        correct: 1,
+                        correctFeedback: 'Correct. The PDF says to start around 50% of Pmax or MBASE to improve convergence.',
+                        incorrectFeedback: 'Not quite. The purpose of the initial Pgen setting is to help the case solve cleanly.'
+                    },
+                    {
+                        question: 'Which report is used to confirm bus voltages are not outside the allowed ±10% range?',
+                        options: [
+                            'Branch loading report',
+                            'Reactive power limit report',
+                            'Voltage level report',
+                            'Flat-run OUT file only'
+                        ],
+                        correct: 2,
+                        correctFeedback: 'Correct. The voltage level report is the step used to check for ±10% voltage violations.',
+                        incorrectFeedback: 'Not quite. The voltage level report is the specific check for bus voltage violations.'
+                    }
+                ]
+            },
+            {
+                title: 'DYR Updates and Flat Runs',
+                subtitle: 'Align dynamic data, run validation, and confirm no new ICS or unstable behavior appears',
+                content: [
+                    {
+                        type: 'card',
+                        html: '<h2>Preparing the DYR File</h2><p>After steady-state integration, the process updates the plant dynamic data. The key rule is that the NEM DYR must reflect the same bus numbering and topology that now exist in the integrated SAV case.</p><ul><li>Create a copy of the RUG DYR file for modification.</li><li>Comment out obsolete plant dynamic data already in the NEM DYR.</li><li>Update any bus-number references in the DYR if bus numbers changed in the SAV.</li><li>Remove unnecessary models such as <strong>GENCLS</strong> and <strong>PLBVFU1</strong> at the slack bus.</li><li>If the POC or upstream SMIB buses are referenced in the DYR, replace them with the actual NEM case bus numbers.</li><li>Append the RUG DYR data to the bottom of the NEM DYR file and save it as <strong>R1.dyr</strong>.</li></ul>'
+                    },
+                    {
+                        type: 'mentor',
+                        title: 'Communication Standard',
+                        text: 'Do not hand over raw dynamic edits without interpretation. When the DYR changes, the reviewer should be able to see what changed, why it changed, which buses were affected, and what validation was done afterward.'
+                    },
+                    {
+                        type: 'card',
+                        html: '<h3>Flat Run Validation</h3><p>The source process then validates the integrated case using a flat run script in a folder containing the current SAV, DYR, and all required DLLs from previously integrated RUGs.</p><ul><li>Configure the script so its data inputs match the current setup.</li><li>Run the flat run and inspect the OUT file in a data visualizer.</li><li>Check that interconnector flows do not swing by <strong>5 MW or more</strong> and remain within limits.</li><li>Check that bus voltages do not swing excessively and broadly retain the previous profile.</li><li>Check that no additional <strong>DSTATEs / ICS</strong> appear compared with the case before the new RUG was inserted.</li></ul>'
+                    },
+                    {
+                        type: 'warning',
+                        title: 'What the Flat Run Is Looking For',
+                        text: 'The flat run is a regression check against the pre-integration case. It is looking for unintended side effects from the new RUG, especially new ICS, abnormal interconnector flow changes, and voltage profile distortion.'
+                    },
+                    {
+                        type: 'success',
+                        title: 'Balanced Completion Standard',
+                        text: 'A balanced integration is one where the model is technically inserted, the dynamic references are aligned, and the regression evidence shows the wider NEM case has not been unintentionally degraded.'
+                    }
+                ],
+                checks: [
+                    {
+                        question: 'When bus numbers are changed in the SAV file, what must happen in the DYR file?',
+                        options: [
+                            'Nothing, because dynamic data is independent of bus numbering',
+                            'Only the plant name must be updated',
+                            'Any dynamic-model references tied to those buses must be updated to match',
+                            'The DYR should be deleted and rebuilt from memory'
+                        ],
+                        correct: 2,
+                        correctFeedback: 'Correct. The DYR must reflect the revised bus numbers wherever dynamic models reference those buses.',
+                        incorrectFeedback: 'Not quite. Dynamic data is bus-referenced, so bus number changes in the SAV must be mirrored in the DYR.'
+                    },
+                    {
+                        question: 'What is one of the explicit flat-run acceptance checks from the PDF?',
+                        options: [
+                            'Interconnector flows must increase by at least 5 MW',
+                            'Additional ICS are acceptable if voltages stay near nominal',
+                            'Interconnector flows should not swing by 5 MW or more compared with before insertion',
+                            'Only the RUG generator terminal voltage matters'
+                        ],
+                        correct: 2,
+                        correctFeedback: 'Correct. The process explicitly checks that interconnector flows do not swing by 5 MW or more relative to the previous profile.',
+                        incorrectFeedback: 'Not quite. A key regression test is that interconnector flow changes stay below that 5 MW threshold and additional ICS do not appear.'
+                    }
+                ]
+            }
+        ],
+        assessment: [
+            {
+                question: 'What file is used as the starting point for checking whether a RUG is already integrated?',
+                options: [
+                    'The standalone RUG RAW file only',
+                    'The NEM SAV file containing previously integrated RUGs',
+                    'The final OUT file from the flat run',
+                    'The SEQ file of the new RUG only'
+                ],
+                correct: 1
+            },
+            {
+                question: 'If an existing switched-on RUG has matching BOP and matching dynamic data, what should you do?',
+                options: [
+                    'Comment out the DYR and rebuild the plant anyway',
+                    'Leave the RUG as it is and proceed to the next one',
+                    'Delete the POC bus and start from the SLD',
+                    'Run the flat run first, then remove it'
+                ],
+                correct: 1
+            },
+            {
+                question: 'What is the purpose of the integration spreadsheet with R1, R2, and a Remarks column?',
+                options: [
+                    'To track insertion sequence and assumptions made during integration',
+                    'To replace the need for RAW and SEQ files',
+                    'To calculate voltage limits automatically',
+                    'To assign area numbers to all buses'
+                ],
+                correct: 0
+            },
+            {
+                question: 'Which saved file names are explicitly created during SMIB preparation?',
+                options: [
+                    'RUG_DM.sav, RUG_DM.sld, RUG_DM.raw, and RUG_DM.seq',
+                    'RUG_FINAL.sav and RUG_FINAL.dyr only',
+                    'NEM_BASE.sav and POC_ONLY.raw',
+                    'R1.out and R1.dll'
+                ],
+                correct: 0
+            },
+            {
+                question: 'After loading the imported network files, what is one sign that RAW data has not loaded correctly?',
+                options: [
+                    'The elements appear in pink and contain no proper data',
+                    'The swing generator is within limits',
+                    'The branch loading report is empty',
+                    'The area number is set to 2 or 3'
+                ],
+                correct: 0
+            },
+            {
+                question: 'What should you do if plant Qgen converges close to Qmax or Qmin during integration?',
+                options: [
+                    'Ignore it and continue to the DYR stage',
+                    'Adjust the scheduled voltage and repeat the power flow solutions',
+                    'Increase Pgen to full output immediately',
+                    'Switch off all interconnectors'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Which existing devices are specifically prioritized in the reactive power limit check?',
+                options: [
+                    'Only load buses below 30 MW',
+                    'Generating plants of 30 MW or more and SVCs',
+                    'Only the new RUG units',
+                    'Transformers with tap changers only'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Which dynamic models are identified as unnecessary at the slack bus and should be removed from the DYR preparation copy?',
+                options: [
+                    'CMLDBU1 and REECCU1',
+                    'GENCLS and PLBVFU1',
+                    'CSVGN1 and WT4G1',
+                    'REECAU1 and REPCAU1'
+                ],
+                correct: 1
+            },
+            {
+                question: 'What files need to be in the folder when running the flat run script?',
+                options: [
+                    'Only the newest PDF and SLD',
+                    'The most recent SAV, DYR, and DLLs containing all previously integrated RUGs',
+                    'Only the SEQ file and voltage report',
+                    'Only the new RUG RAW file'
+                ],
+                correct: 1
+            },
+            {
+                question: 'Which result would indicate the new RUG may have introduced a problem during flat-run validation?',
+                options: [
+                    'Interconnector flows remain close to the previous profile and within limits',
+                    'No additional DSTATEs or ICS appear relative to before insertion',
+                    'Bus voltages retain a similar profile to the previous case',
+                    'Interconnector MW flows swing by 5 MW or more or new ICS appear'
+                ],
+                correct: 3
+            }
+        ]
+    };
+    </script>
+    <script src="../../training-engine.js"></script>
+    <script src="../../module-renderer.js"></script>
+</body>
+</html>

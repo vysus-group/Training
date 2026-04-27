@@ -94,20 +94,21 @@ const TrainingEngine = (() => {
         'simulation':         { name: 'Simulation Assessment Guidelines',   level: 'senior',    xp: 900,  order: 11, file: 'modules/simulation/index.html' },
         'script-repo':        { name: 'Script Repository & Version Control',level: 'senior',    xp: 700,  order: 12, file: 'modules/script-repo/index.html' },
         'tech-hub':           { name: 'Technical Knowledge Hub',            level: 'senior',    xp: 800,  order: 13, file: 'modules/tech-hub/index.html' },
-        'cross-platform':     { name: 'Cross-Platform Model Validation',    level: 'lead',      xp: 1000, order: 14, file: 'modules/cross-platform/index.html' },
-        'auto-init':          { name: 'Automated Init Assessment',          level: 'lead',      xp: 1000, order: 15, file: 'modules/auto-init/index.html' },
-        'project-mgmt':       { name: 'Project Management Template',        level: 'lead',      xp: 900,  order: 16, file: 'modules/project-mgmt/index.html' },
-        'ms-project':         { name: 'MS Project Scoping Templates',       level: 'lead',      xp: 800,  order: 17, file: 'modules/ms-project/index.html' },
-        'team-governance':    { name: 'Team Structure & Governance',        level: 'lead',      xp: 900,  order: 18, file: 'modules/team-governance/index.html' },
-        'peace-framework':    { name: 'PEACE Framework',                    level: 'principal',  xp: 1200, order: 19, file: 'modules/peace-framework/index.html' },
-        'talent-pipeline':    { name: 'Talent Pipeline / Intern Program',   level: 'principal',  xp: 1100, order: 20, file: 'modules/talent-pipeline/index.html' },
-        '5.3.4A':             { name: '5.3.4A Letter',                      level: 'entry',     xp: 500,  order: 21, file: 'modules/5.3.4A Letter/index.html' },
-        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 22, file: 'modules/Data Request/index.html' }
+        'aemo-wan-studies-rug-integration': { name: 'AEMO WAN Studies-RUG Integration', level: 'senior', xp: 850, order: 14, file: 'modules/aemo-wan-studies-rug-integration/index.html' },
+        'cross-platform':     { name: 'Cross-Platform Model Validation',    level: 'lead',      xp: 1000, order: 15, file: 'modules/cross-platform/index.html' },
+        'auto-init':          { name: 'Automated Init Assessment',          level: 'lead',      xp: 1000, order: 16, file: 'modules/auto-init/index.html' },
+        'project-mgmt':       { name: 'Project Management Template',        level: 'lead',      xp: 900,  order: 17, file: 'modules/project-mgmt/index.html' },
+        'ms-project':         { name: 'MS Project Scoping Templates',       level: 'lead',      xp: 800,  order: 18, file: 'modules/ms-project/index.html' },
+        'team-governance':    { name: 'Team Structure & Governance',        level: 'lead',      xp: 900,  order: 19, file: 'modules/team-governance/index.html' },
+        'peace-framework':    { name: 'PEACE Framework',                    level: 'principal',  xp: 1200, order: 20, file: 'modules/peace-framework/index.html' },
+        'talent-pipeline':    { name: 'Talent Pipeline / Intern Program',   level: 'principal',  xp: 1100, order: 21, file: 'modules/talent-pipeline/index.html' },
+        '5.3.4A':             { name: '5.3.4A Letter',                      level: 'entry',     xp: 500,  order: 22, file: 'modules/5.3.4A Letter/index.html' },
+        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 23, file: 'modules/Data Request/index.html' }
     };
 
     const LEVEL_MODULES = {
         entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request'],
-        senior:    ['aemo-gps', 'gps-requirements', 'project-handover-process', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub'],
+        senior:    ['aemo-gps', 'gps-requirements', 'project-handover-process', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub', 'aemo-wan-studies-rug-integration'],
         lead:      ['cross-platform', 'auto-init', 'project-mgmt', 'ms-project', 'team-governance'],
         principal: ['peace-framework', 'talent-pipeline']
     };

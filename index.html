@@ -220,11 +220,50 @@
             display: flex; align-items: center; gap: 1rem; margin-bottom: 1.2rem;
             padding-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.08);
         }
+        summary.category-header, summary.module-level-header {
+            cursor: pointer; list-style: none; user-select: none;
+        }
+        summary.category-header::-webkit-details-marker,
+        summary.module-level-header::-webkit-details-marker {
+            display: none;
+        }
         .category-header h3 { font-size: 1.5rem; }
         .category-badge {
             padding: 0.3rem 0.8rem; border-radius: 15px; font-size: 0.75rem;
             font-weight: 700; text-transform: uppercase;
         }
+        .module-category-section { margin-bottom: 3.2rem; }
+        .module-category-header {
+            align-items: flex-start; border-bottom-color: rgba(0,227,169,0.14);
+        }
+        .module-category-header h3 { font-size: 1.7rem; }
+        .module-category-summary {
+            color: rgba(255,255,255,0.45); font-size: 0.86rem; margin-left: auto;
+            max-width: 420px; text-align: right; line-height: 1.45;
+        }
+        .module-level-section { margin-top: 1.5rem; }
+        .module-level-header {
+            display: flex; align-items: center; gap: 0.8rem; margin-bottom: 1rem;
+        }
+        .module-level-header h4 { font-size: 1.08rem; color: white; }
+        .module-level-desc {
+            color: rgba(255,255,255,0.4); font-size: 0.82rem; margin-left: auto;
+        }
+        .collapse-chevron {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 26px; height: 26px; border-radius: 50%;
+            color: rgba(255,255,255,0.55); background: rgba(255,255,255,0.05);
+            font-size: 1rem; font-weight: 800; transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+        details[open] > summary .collapse-chevron {
+            transform: rotate(90deg); color: var(--stockholm-neon); background: rgba(0,227,169,0.1);
+        }
+        summary.category-header:hover .collapse-chevron,
+        summary.module-level-header:hover .collapse-chevron {
+            color: white; background: rgba(255,255,255,0.1);
+        }
+        .badge-technical { background: linear-gradient(135deg, var(--stockholm-neon), var(--bath-sky)); color: var(--navy); }
+        .badge-nontechnical { background: linear-gradient(135deg, var(--houston-pink), var(--orlando-red)); color: white; }
         .badge-entry { background: linear-gradient(135deg, var(--stockholm-neon), var(--malmo-green)); color: white; }
         .badge-senior { background: linear-gradient(135deg, var(--bath-sky), var(--hellerup-royal)); color: white; }
         .badge-lead { background: linear-gradient(135deg, var(--houston-pink), var(--mumbai-magenta)); color: white; }
@@ -307,6 +346,10 @@
         @media (max-width: 900px) {
             .profile-card { grid-template-columns: 1fr; }
             .stats-grid { grid-template-columns: repeat(3, 1fr); }
+            .module-category-header, .module-level-header { flex-wrap: wrap; }
+            .module-category-summary, .module-level-desc {
+                flex-basis: 100%; margin-left: 0; text-align: left;
+            }
         }
         @media (max-width: 600px) {
             .main-content { padding: 6.5rem 1rem 3rem; }
@@ -445,7 +488,33 @@
 
     const READY_MODULES = ['ner-chapter5', 'access-standards', 'aemo-gps', 'gps-requirements', 'project-handover-process', 'network-storage', 'way-of-working', '5.3.4A', 'data-request'];
     MODULE_ICONS['aemo-wan-studies-rug-integration'] = '&#128225;';
+    MODULE_ICONS['technical-vision-strategy'] = '&#128161;';
+    MODULE_ICONS['industry-standards-engagement'] = '&#127760;';
+    MODULE_ICONS['technical-advisory-expert-witness'] = '&#127891;';
     READY_MODULES.push('aemo-wan-studies-rug-integration');
+
+    const MODULE_CATEGORIES = [
+        { key: 'technical', label: 'technical', name: 'Technical Module', badge: 'badge-technical', desc: 'Grid codes, GPS, modelling, assessments, and technical tooling.' },
+        { key: 'nontechnical', label: 'non-technical', name: 'Non-Technical Module', badge: 'badge-nontechnical', desc: 'Ways of working, project process, governance, and people-focused training.' }
+    ];
+
+    const NON_TECHNICAL_MODULES = new Set([
+        'network-storage',
+        'way-of-working',
+        'file-storage',
+        'project-handover-process',
+        'project-mgmt',
+        'ms-project',
+        'team-governance',
+        'peace-framework',
+        'talent-pipeline',
+        '5.3.4A',
+        'data-request'
+    ]);
+
+    function getModuleCategory(id) {
+        return NON_TECHNICAL_MODULES.has(id) ? 'nontechnical' : 'technical';
+    }
 
     // ── Login ──────────────────────────────────────────────────
     function checkLogin() {
@@ -787,19 +856,41 @@
         const registry = TrainingEngine.Modules.registry();
         let html = '';
 
-        levels.forEach(lvl => {
-            const moduleIds = TrainingEngine.LEVEL_MODULES[lvl.key];
+        MODULE_CATEGORIES.forEach(category => {
+            let categoryCount = 0;
+            const levelSections = levels.map(lvl => {
+                const moduleIds = (TrainingEngine.LEVEL_MODULES[lvl.key] || [])
+                    .filter(id => registry[id] && getModuleCategory(id) === category.key);
+
+                if (moduleIds.length === 0) return '';
+
+                categoryCount += moduleIds.length;
+                return `
+                <details class="module-level-section" open>
+                    <summary class="module-level-header">
+                        <span class="collapse-chevron" aria-hidden="true">&rsaquo;</span>
+                        <span class="category-badge ${lvl.badge}">${lvl.key}</span>
+                        <h4>${lvl.name}</h4>
+                        <span class="module-level-desc">${lvl.desc} | ${moduleIds.length} modules</span>
+                    </summary>
+                    <div class="modules-grid">
+                        ${moduleIds.map(id => renderModuleCard(id, registry[id])).join('')}
+                    </div>
+                </details>`;
+            }).join('');
+
+            if (!levelSections) return;
+
             html += `
-            <div class="category-section">
-                <div class="category-header">
-                    <span class="category-badge ${lvl.badge}">${lvl.key}</span>
-                    <h3>${lvl.name}</h3>
-                    <span style="color:rgba(255,255,255,0.4); font-size:0.85rem; margin-left:auto;">${lvl.desc}</span>
-                </div>
-                <div class="modules-grid">
-                    ${moduleIds.map(id => renderModuleCard(id, registry[id])).join('')}
-                </div>
-            </div>`;
+            <details class="category-section module-category-section" open>
+                <summary class="category-header module-category-header">
+                    <span class="collapse-chevron" aria-hidden="true">&rsaquo;</span>
+                    <span class="category-badge ${category.badge}">${category.label}</span>
+                    <h3>${category.name}</h3>
+                    <span class="module-category-summary">${category.desc} ${categoryCount} modules.</span>
+                </summary>
+                ${levelSections}
+            </details>`;
         });
 
         document.getElementById('modules-list').innerHTML = html;

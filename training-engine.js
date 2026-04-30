@@ -103,14 +103,17 @@ const TrainingEngine = (() => {
         'peace-framework':    { name: 'PEACE Framework',                    level: 'principal',  xp: 1200, order: 20, file: 'modules/peace-framework/index.html' },
         'talent-pipeline':    { name: 'Talent Pipeline / Intern Program',   level: 'principal',  xp: 1100, order: 21, file: 'modules/talent-pipeline/index.html' },
         '5.3.4A':             { name: '5.3.4A Letter',                      level: 'entry',     xp: 500,  order: 22, file: 'modules/5.3.4A Letter/index.html' },
-        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 23, file: 'modules/Data Request/index.html' }
+        'data-request':       { name: 'Data Request',                       level: 'entry',     xp: 500,  order: 23, file: 'modules/Data Request/index.html' },
+        'technical-vision-strategy': { name: 'Technical Vision & Strategy',  level: 'principal', xp: 1300, order: 24, file: 'modules/technical-vision-strategy/index.html' },
+        'industry-standards-engagement': { name: 'Industry Standards & Engagement', level: 'principal', xp: 1300, order: 25, file: 'modules/industry-standards-engagement/index.html' },
+        'technical-advisory-expert-witness': { name: 'Technical Advisory & Expert Witness', level: 'principal', xp: 1300, order: 26, file: 'modules/technical-advisory-expert-witness/index.html' }
     };
 
     const LEVEL_MODULES = {
         entry:     ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request'],
         senior:    ['aemo-gps', 'gps-requirements', 'project-handover-process', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub', 'aemo-wan-studies-rug-integration'],
         lead:      ['cross-platform', 'auto-init', 'project-mgmt', 'ms-project', 'team-governance'],
-        principal: ['peace-framework', 'talent-pipeline']
+        principal: ['technical-vision-strategy', 'industry-standards-engagement', 'technical-advisory-expert-witness', 'peace-framework', 'talent-pipeline']
     };
 
     // ── State ──────────────────────────────────────────────────────

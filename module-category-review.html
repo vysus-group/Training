@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module Category Review</title>
+    <style>
+        :root {
+            --navy: #1a2744;
+            --stockholm-neon: #00e3a9;
+            --malmo-green: #005454;
+            --bath-sky: #4b81ef;
+            --hellerup-royal: #171c8f;
+            --houston-pink: #f188f4;
+            --mumbai-magenta: #8e329c;
+            --orlando-red: #f92d63;
+            --barcelona-dusk: #f28c28;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at top left, rgba(0, 227, 169, 0.16), transparent 34rem),
+                radial-gradient(circle at bottom right, rgba(241, 136, 244, 0.14), transparent 30rem),
+                linear-gradient(135deg, #111827, var(--navy));
+            color: white;
+            font-family: Inter, Segoe UI, Arial, sans-serif;
+            line-height: 1.5;
+            padding: 2rem;
+        }
+
+        .page {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .review-header {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            gap: 1.5rem;
+            padding: 1.5rem 0 2rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+            margin-bottom: 2rem;
+        }
+
+        .review-header h1 {
+            font-size: clamp(2rem, 4vw, 3.6rem);
+            line-height: 1;
+            margin-bottom: 0.7rem;
+        }
+
+        .review-header p {
+            color: rgba(255, 255, 255, 0.68);
+            max-width: 760px;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(120px, 1fr));
+            gap: 0.75rem;
+            min-width: 420px;
+        }
+
+        .summary-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 0.9rem;
+        }
+
+        .summary-value {
+            color: var(--stockholm-neon);
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .summary-label {
+            color: rgba(255, 255, 255, 0.52);
+            font-size: 0.78rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .module-category-section { margin-bottom: 3.2rem; }
+
+        .category-header {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            border-bottom: 1px solid rgba(0, 227, 169, 0.14);
+            padding-bottom: 0.8rem;
+            margin-bottom: 1.2rem;
+        }
+
+        summary.category-header,
+        summary.module-level-header {
+            cursor: pointer;
+            list-style: none;
+            user-select: none;
+        }
+
+        summary.category-header::-webkit-details-marker,
+        summary.module-level-header::-webkit-details-marker {
+            display: none;
+        }
+
+        .category-header h2 {
+            font-size: 1.7rem;
+        }
+
+        .category-badge {
+            padding: 0.3rem 0.8rem;
+            border-radius: 999px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .badge-technical {
+            background: linear-gradient(135deg, var(--stockholm-neon), var(--bath-sky));
+            color: var(--navy);
+        }
+
+        .badge-nontechnical {
+            background: linear-gradient(135deg, var(--houston-pink), var(--orlando-red));
+            color: white;
+        }
+
+        .badge-entry {
+            background: linear-gradient(135deg, var(--stockholm-neon), var(--malmo-green));
+            color: white;
+        }
+
+        .badge-senior {
+            background: linear-gradient(135deg, var(--bath-sky), var(--hellerup-royal));
+            color: white;
+        }
+
+        .badge-lead {
+            background: linear-gradient(135deg, var(--houston-pink), var(--mumbai-magenta));
+            color: white;
+        }
+
+        .badge-principal {
+            background: linear-gradient(135deg, var(--orlando-red), var(--barcelona-dusk));
+            color: white;
+        }
+
+        .category-summary {
+            color: rgba(255, 255, 255, 0.48);
+            font-size: 0.86rem;
+            line-height: 1.45;
+            max-width: 420px;
+            text-align: right;
+            margin-left: auto;
+        }
+
+        .module-level-section { margin-top: 1.5rem; }
+
+        .module-level-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 1rem;
+        }
+
+        .module-level-header h3 {
+            font-size: 1.08rem;
+        }
+
+        .module-level-desc {
+            color: rgba(255, 255, 255, 0.42);
+            font-size: 0.82rem;
+            margin-left: auto;
+        }
+
+        .collapse-chevron {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            color: rgba(255, 255, 255, 0.55);
+            background: rgba(255, 255, 255, 0.05);
+            font-size: 1rem;
+            font-weight: 800;
+            transition: transform 0.2s ease, color 0.2s ease, background 0.2s ease;
+        }
+
+        details[open] > summary .collapse-chevron {
+            transform: rotate(90deg);
+            color: var(--stockholm-neon);
+            background: rgba(0, 227, 169, 0.1);
+        }
+
+        summary.category-header:hover .collapse-chevron,
+        summary.module-level-header:hover .collapse-chevron {
+            color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 1.2rem;
+        }
+
+        .module-card {
+            min-height: 168px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            padding: 1.5rem;
+            cursor: pointer;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+        }
+
+        .module-card:hover {
+            transform: translateY(-5px);
+            border-color: rgba(0, 227, 169, 0.35);
+            box-shadow: 0 15px 40px rgba(0, 227, 169, 0.16);
+        }
+
+        .module-card.completed-card {
+            border-color: rgba(0, 227, 169, 0.22);
+        }
+
+        .module-card.coming-soon {
+            opacity: 0.45;
+            cursor: default;
+        }
+
+        .module-card.coming-soon:hover {
+            transform: none;
+            box-shadow: none;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .module-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 0.8rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .module-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 14px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            color: var(--stockholm-neon);
+            background: linear-gradient(135deg, rgba(0, 227, 169, 0.2), rgba(0, 84, 84, 0.2));
+        }
+
+        .module-status {
+            padding: 0.22rem 0.6rem;
+            border-radius: 10px;
+            font-size: 0.68rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+
+        .status-ready {
+            background: var(--stockholm-neon);
+            color: var(--navy);
+        }
+
+        .status-done {
+            background: rgba(0, 227, 169, 0.15);
+            color: var(--stockholm-neon);
+            border: 1px solid rgba(0, 227, 169, 0.3);
+        }
+
+        .status-coming {
+            background: rgba(255, 255, 255, 0.08);
+            color: rgba(255, 255, 255, 0.55);
+        }
+
+        .status-progress {
+            background: rgba(75, 129, 239, 0.15);
+            color: var(--bath-sky);
+            border: 1px solid rgba(75, 129, 239, 0.3);
+        }
+
+        .module-card h4 {
+            font-size: 1.05rem;
+            margin-bottom: 0.45rem;
+        }
+
+        .module-xp {
+            color: var(--stockholm-neon);
+            font-size: 0.82rem;
+            font-weight: 700;
+        }
+
+        .module-score {
+            color: rgba(255, 255, 255, 0.52);
+            font-size: 0.82rem;
+            margin-top: 0.3rem;
+        }
+
+        @media (max-width: 980px) {
+            body { padding: 1.2rem; }
+            .review-header { display: block; }
+            .summary-grid {
+                min-width: 0;
+                margin-top: 1.4rem;
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .category-header, .module-level-header { flex-wrap: wrap; }
+            .category-summary, .module-level-desc {
+                flex-basis: 100%;
+                margin-left: 0;
+                text-align: left;
+            }
+        }
+
+        @media (max-width: 620px) {
+            .modules-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <main class="page">
+        <header class="review-header">
+            <div>
+                <h1>Modules Review</h1>
+                <p>Sample preview of the updated Modules tab split into Technical Module and Non-Technical Module sections. Cards keep the same status, score, XP, and click-through patterns as the live page.</p>
+            </div>
+            <div class="summary-grid" id="summary-grid"></div>
+        </header>
+
+        <section id="modules-list"></section>
+    </main>
+
+    <script>
+        const levels = [
+            { key: 'entry', name: 'Entry Level', badge: 'badge-entry', desc: 'Foundation knowledge for all team members' },
+            { key: 'senior', name: 'Senior Level', badge: 'badge-senior', desc: 'Advanced technical depth' },
+            { key: 'lead', name: 'Lead Level', badge: 'badge-lead', desc: 'Leadership and cross-functional skills' },
+            { key: 'principal', name: 'Principal Level', badge: 'badge-principal', desc: 'Strategic and organizational impact' }
+        ];
+
+        const moduleCategories = [
+            { key: 'technical', label: 'technical', name: 'Technical Module', badge: 'badge-technical', desc: 'Grid codes, GPS, modelling, assessments, and technical tooling.' },
+            { key: 'nontechnical', label: 'non-technical', name: 'Non-Technical Module', badge: 'badge-nontechnical', desc: 'Ways of working, project process, governance, and people-focused training.' }
+        ];
+
+        const readyModules = new Set([
+            'ner-chapter5',
+            'access-standards',
+            'aemo-gps',
+            'gps-requirements',
+            'project-handover-process',
+            'network-storage',
+            'way-of-working',
+            '5.3.4A',
+            'data-request',
+            'aemo-wan-studies-rug-integration'
+        ]);
+
+        const nonTechnicalModules = new Set([
+            'network-storage',
+            'way-of-working',
+            'file-storage',
+            'project-handover-process',
+            'project-mgmt',
+            'ms-project',
+            'team-governance',
+            'peace-framework',
+            'talent-pipeline',
+            '5.3.4A',
+            'data-request'
+        ]);
+
+        const modules = {
+            'ner-chapter5': { name: 'NER Chapter 5 Introduction', level: 'entry', xp: 500, file: 'modules/ner-chapter5/index.html' },
+            'access-standards': { name: 'Access Standards & GPS Framework', level: 'entry', xp: 600, file: 'modules/access-standards/index.html' },
+            'network-storage': { name: 'Network Storage & SSD Workflow', level: 'entry', xp: 500, file: 'modules/network-storage/index.html' },
+            'way-of-working': { name: 'Way of Working / WOW', level: 'entry', xp: 500, file: 'modules/way-of-working/index.html' },
+            'file-storage': { name: 'File Storage Management', level: 'entry', xp: 500, file: 'modules/file-storage/index.html' },
+            '5.3.4A': { name: '5.3.4A Letter', level: 'entry', xp: 500, file: 'modules/5.3.4A Letter/index.html' },
+            'data-request': { name: 'Data Request', level: 'entry', xp: 500, file: 'modules/Data Request/index.html' },
+            'aemo-gps': { name: 'AEMO GPS Document Process', level: 'senior', xp: 800, file: 'modules/aemo-gps/index.html' },
+            'gps-requirements': { name: 'GPS Requirements Training', level: 'senior', xp: 900, file: 'modules/gps-requirements/index.html' },
+            'project-handover-process': { name: 'Project Handover Process', level: 'senior', xp: 750, file: 'modules/project-handover-process/index.html' },
+            'grid-code-hub': { name: 'Grid Code Knowledge Hub', level: 'senior', xp: 800, file: 'modules/grid-code-hub/index.html' },
+            'dmat-ner': { name: 'DMAT/NER Alignment Checklist', level: 'senior', xp: 700, file: 'modules/dmat-ner/index.html' },
+            'simulation': { name: 'Simulation Assessment Guidelines', level: 'senior', xp: 900, file: 'modules/simulation/index.html' },
+            'script-repo': { name: 'Script Repository & Version Control', level: 'senior', xp: 700, file: 'modules/script-repo/index.html' },
+            'tech-hub': { name: 'Technical Knowledge Hub', level: 'senior', xp: 800, file: 'modules/tech-hub/index.html' },
+            'aemo-wan-studies-rug-integration': { name: 'AEMO WAN Studies-RUG Integration', level: 'senior', xp: 850, file: 'modules/aemo-wan-studies-rug-integration/index.html' },
+            'cross-platform': { name: 'Cross-Platform Model Validation', level: 'lead', xp: 1000, file: 'modules/cross-platform/index.html' },
+            'auto-init': { name: 'Automated Init Assessment', level: 'lead', xp: 1000, file: 'modules/auto-init/index.html' },
+            'project-mgmt': { name: 'Project Management Template', level: 'lead', xp: 900, file: 'modules/project-mgmt/index.html' },
+            'ms-project': { name: 'MS Project Scoping Templates', level: 'lead', xp: 800, file: 'modules/ms-project/index.html' },
+            'team-governance': { name: 'Team Structure & Governance', level: 'lead', xp: 900, file: 'modules/team-governance/index.html' },
+            'technical-vision-strategy': { name: 'Technical Vision & Strategy', level: 'principal', xp: 1300, file: 'modules/technical-vision-strategy/index.html' },
+            'industry-standards-engagement': { name: 'Industry Standards & Engagement', level: 'principal', xp: 1300, file: 'modules/industry-standards-engagement/index.html' },
+            'technical-advisory-expert-witness': { name: 'Technical Advisory & Expert Witness', level: 'principal', xp: 1300, file: 'modules/technical-advisory-expert-witness/index.html' },
+            'peace-framework': { name: 'PEACE Framework', level: 'principal', xp: 1200, file: 'modules/peace-framework/index.html' },
+            'talent-pipeline': { name: 'Talent Pipeline / Intern Program', level: 'principal', xp: 1100, file: 'modules/talent-pipeline/index.html' }
+        };
+
+        const levelModules = {
+            entry: ['ner-chapter5', 'access-standards', 'network-storage', 'way-of-working', 'file-storage', '5.3.4A', 'data-request'],
+            senior: ['aemo-gps', 'gps-requirements', 'project-handover-process', 'grid-code-hub', 'dmat-ner', 'simulation', 'script-repo', 'tech-hub', 'aemo-wan-studies-rug-integration'],
+            lead: ['cross-platform', 'auto-init', 'project-mgmt', 'ms-project', 'team-governance'],
+            principal: ['technical-vision-strategy', 'industry-standards-engagement', 'technical-advisory-expert-witness', 'peace-framework', 'talent-pipeline']
+        };
+
+        const icons = {
+            'ner-chapter5': 'NER',
+            'access-standards': 'GPS',
+            'network-storage': 'SSD',
+            'way-of-working': 'WOW',
+            'file-storage': 'FILE',
+            'aemo-gps': 'AEMO',
+            'gps-requirements': 'REQ',
+            'project-handover-process': 'H/O',
+            'grid-code-hub': 'CODE',
+            'dmat-ner': 'NER',
+            simulation: 'SIM',
+            'script-repo': 'GIT',
+            'tech-hub': 'TECH',
+            'aemo-wan-studies-rug-integration': 'WAN',
+            'cross-platform': 'XPL',
+            'auto-init': 'AUTO',
+            'project-mgmt': 'PM',
+            'ms-project': 'MSP',
+            'team-governance': 'TEAM',
+            'technical-vision-strategy': 'TVS',
+            'industry-standards-engagement': 'STD',
+            'technical-advisory-expert-witness': 'ADV',
+            'peace-framework': 'PEACE',
+            'talent-pipeline': 'TAL',
+            '5.3.4A': 'LTR',
+            'data-request': 'DATA'
+        };
+
+        const sampleProgress = {
+            'ner-chapter5': { completed: true, bestScore: 92, attempts: 2, sectionsCompleted: [0, 1, 2] },
+            'access-standards': { completed: false, bestScore: 0, attempts: 1, sectionsCompleted: [0, 1] },
+            'way-of-working': { completed: true, bestScore: 100, attempts: 1, sectionsCompleted: [0, 1, 2] },
+            'aemo-gps': { completed: false, bestScore: 0, attempts: 0, sectionsCompleted: [] },
+            'project-handover-process': { completed: false, bestScore: 0, attempts: 1, sectionsCompleted: [0] }
+        };
+
+        function getModuleCategory(id) {
+            return nonTechnicalModules.has(id) ? 'nontechnical' : 'technical';
+        }
+
+        function getProgress(id) {
+            return sampleProgress[id] || { completed: false, bestScore: 0, attempts: 0, sectionsCompleted: [] };
+        }
+
+        function renderSummary() {
+            const moduleIds = Object.keys(modules);
+            const completed = moduleIds.filter(id => getProgress(id).completed).length;
+            const ready = moduleIds.filter(id => readyModules.has(id)).length;
+            const technical = moduleIds.filter(id => getModuleCategory(id) === 'technical').length;
+            const nontechnical = moduleIds.length - technical;
+
+            document.getElementById('summary-grid').innerHTML = [
+                ['Total', moduleIds.length],
+                ['Ready', ready],
+                ['Technical', technical],
+                ['Non-Technical', nontechnical],
+                ['Completed', completed]
+            ].map(([label, value]) => `
+                <div class="summary-card">
+                    <div class="summary-value">${value}</div>
+                    <div class="summary-label">${label}</div>
+                </div>
+            `).join('');
+        }
+
+        function renderModules() {
+            let html = '';
+
+            moduleCategories.forEach(category => {
+                let categoryCount = 0;
+                const levelSections = levels.map(level => {
+                    const moduleIds = (levelModules[level.key] || [])
+                        .filter(id => modules[id] && getModuleCategory(id) === category.key);
+
+                    if (moduleIds.length === 0) return '';
+                    categoryCount += moduleIds.length;
+
+                    return `
+                        <details class="module-level-section" open>
+                            <summary class="module-level-header">
+                                <span class="collapse-chevron" aria-hidden="true">&rsaquo;</span>
+                                <span class="category-badge ${level.badge}">${level.key}</span>
+                                <h3>${level.name}</h3>
+                                <span class="module-level-desc">${level.desc} | ${moduleIds.length} modules</span>
+                            </summary>
+                            <div class="modules-grid">
+                                ${moduleIds.map(id => renderModuleCard(id, modules[id])).join('')}
+                            </div>
+                        </details>
+                    `;
+                }).join('');
+
+                html += `
+                    <details class="module-category-section" open>
+                        <summary class="category-header">
+                            <span class="collapse-chevron" aria-hidden="true">&rsaquo;</span>
+                            <span class="category-badge ${category.badge}">${category.label}</span>
+                            <h2>${category.name}</h2>
+                            <span class="category-summary">${category.desc} ${categoryCount} modules.</span>
+                        </summary>
+                        ${levelSections}
+                    </details>
+                `;
+            });
+
+            document.getElementById('modules-list').innerHTML = html;
+        }
+
+        function renderModuleCard(id, module) {
+            const ready = readyModules.has(id);
+            const progress = getProgress(id);
+            const icon = icons[id] || 'MOD';
+            let statusHTML = '';
+            let cardClass = '';
+
+            if (progress.completed) {
+                statusHTML = `<span class="module-status status-done">${progress.bestScore}%</span>`;
+                cardClass = 'completed-card';
+            } else if (progress.attempts > 0 || progress.sectionsCompleted.length > 0) {
+                statusHTML = '<span class="module-status status-progress">In Progress</span>';
+            } else if (ready) {
+                statusHTML = '<span class="module-status status-ready">Ready</span>';
+            } else {
+                statusHTML = '<span class="module-status status-coming">Coming Soon</span>';
+                cardClass = 'coming-soon';
+            }
+
+            const click = ready ? `onclick="window.location.href='${module.file}'"` : '';
+            const score = progress.completed
+                ? `<div class="module-score">Best: ${progress.bestScore}% | Attempts: ${progress.attempts}</div>`
+                : '';
+
+            return `
+                <article class="module-card ${cardClass}" ${click}>
+                    <div class="module-card-header">
+                        <div class="module-icon">${icon}</div>
+                        ${statusHTML}
+                    </div>
+                    <h4>${module.name}</h4>
+                    <div class="module-xp">${module.xp} XP</div>
+                    ${score}
+                </article>
+            `;
+        }
+
+        renderSummary();
+        renderModules();
+    </script>
+</body>
+</html>

@@ -502,21 +502,36 @@ const TrainingEngine = (() => {
             if (!sb) return { ok: false, error: 'Could not connect to server.' };
 
             try {
-                let response = await sb.rpc('reset_password', {
+                const response = await sb.rpc('reset_password', {
                     p_email: pending.email,
                     p_hash: hash
                 });
 
                 if (response.error) {
-                    response = await sb.rpc('register_password', {
-                        p_email: pending.email,
-                        p_hash: hash
-                    });
+                    const missingResetRpc = response.error.code === 'PGRST202' ||
+                        /Could not find the function/i.test(response.error.message || '');
+
+                    if (!missingResetRpc) {
+                        console.error('reset_password error:', response.error);
+                        return { ok: false, error: 'Password reset failed. Please try again.' };
+                    }
+
+                    console.warn('reset_password RPC is missing; falling back to direct credential update.');
+                    const update = await sb.from('user_credentials')
+                        .update({ password_hash: hash })
+                        .eq('email', pending.email);
+
+                    if (update.error) {
+                        console.error('password credential update error:', update.error);
+                        return { ok: false, error: 'Password reset failed. Please try again.' };
+                    }
+                } else if (response.data === false) {
+                    return { ok: false, error: 'No account was found for this reset link.' };
                 }
 
-                if (response.error) {
-                    console.error('reset_password error:', response.error);
-                    return { ok: false, error: 'Password reset failed. Please contact an administrator if the issue persists.' };
+                const verified = await Auth.verifyPassword(pending.email, hash);
+                if (verified !== true) {
+                    return { ok: false, error: 'Password reset could not be confirmed. Please try again.' };
                 }
 
                 const tokens = loadResetTokens();

@@ -198,6 +198,22 @@
         }
         .stat-value { font-size: 2rem; font-weight: 800; color: var(--stockholm-neon); }
         .stat-label { font-size: 0.8rem; color: rgba(255,255,255,0.5); font-weight: 600; margin-top: 0.2rem; }
+        .level-date-panel {
+            min-height: 132px; display: flex; flex-direction: column; align-items: center;
+            justify-content: center; text-align: center; padding: 0.4rem 0;
+        }
+        .level-date-icon { font-size: 3.4rem; line-height: 1; margin-bottom: 0.5rem; }
+        .dashboard-date-label {
+            color: var(--stockholm-neon); font-size: 0.72rem; font-weight: 800;
+            letter-spacing: 0; text-transform: uppercase;
+        }
+        .dashboard-date-value {
+            color: white; font-size: 1.05rem; font-weight: 700; line-height: 1.35;
+            margin-top: 0.18rem;
+        }
+        .level-date-meta {
+            color: rgba(255,255,255,0.5); font-size: 0.84rem; margin-top: 0.35rem;
+        }
 
         /* Streak Calendar */
         .streak-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; }
@@ -797,6 +813,12 @@
         const progress = TrainingEngine.XP.progressToNext();
         const completed = TrainingEngine.Modules.completionCount();
         const total = TrainingEngine.Modules.totalModules();
+        const dashboardDate = new Intl.DateTimeFormat('en-AU', {
+            weekday: 'long',
+            day: 'numeric',
+            month: 'long',
+            year: 'numeric'
+        }).format(new Date());
 
         document.getElementById('profile-card').innerHTML = `
             <div class="profile-info">
@@ -824,9 +846,11 @@
                     <div class="stat-label">Remaining</div>
                 </div>
             </div>
-            <div style="text-align:center;">
-                <div style="font-size:4rem; margin-bottom:0.3rem;">${level.icon}</div>
-                <div style="font-size:0.9rem; color:rgba(255,255,255,0.5);">Level ${state.level + 1} of ${TrainingEngine.LEVELS.length}</div>
+            <div class="level-date-panel" aria-label="Current date and level">
+                <div class="level-date-icon">${level.icon}</div>
+                <div class="dashboard-date-label">Today</div>
+                <div class="dashboard-date-value">${dashboardDate}</div>
+                <div class="level-date-meta">Level ${state.level + 1} of ${TrainingEngine.LEVELS.length}</div>
             </div>
         `;
 
